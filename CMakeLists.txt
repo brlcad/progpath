@@ -67,3 +67,8 @@ endif (${BSD_LIBRARY})
 if (${C_LIBRARY})
    target_link_libraries(pn PRIVATE ${C_LIBRARY})
 endif (${C_LIBRARY})
+
+target_compile_options(progpath PRIVATE
+   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+)
