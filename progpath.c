@@ -1,5 +1,5 @@
 
-#include "config.h"
+#include "progpath_config.h"
 
 #define _GNU_SOURCE 1
 
@@ -292,7 +292,7 @@ int main(int ac, char *av[]) {
   }
 #endif
 
-  // AIX: getprocs64()
+
   // HPUX64: pstat_getproc64()
   // HPUX: pstat_getproc()
   // IBM: w_getpsent()
