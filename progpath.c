@@ -15,7 +15,7 @@
 #  include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H /* for wait */
-#  include <sys/wait.h>
+nnn#  include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
@@ -253,6 +253,8 @@ int main(int ac, char *av[]) {
   }
 #endif
 
+  /* verified, AIX */
+  /* short name */
 #ifdef HAVE_GETPROCS
   {
     struct procsinfo pinfo[16];
@@ -271,6 +273,8 @@ int main(int ac, char *av[]) {
   }
 #endif
 
+  /* verified, AIX */
+  /* short name */
 #ifdef HAVE_GETPROCS64
   {
     struct procentry64 *pentry;
