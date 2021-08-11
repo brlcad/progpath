@@ -15,7 +15,7 @@
 #  include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H /* for wait */
-nnn#  include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
@@ -57,12 +57,16 @@ extern int readlink(const char *, char *, size_t);
 int main(int ac, char *av[]) {
   const char *argv0 = NULL;
   char buf[MAXPATHLEN] = {0};
-  int ret = 0;
 
-    /* verified, MacOSX, OpenBSD */
-    /* short name */
+  if (ac > 1) {
+    printf("Usage: %s\n", av[0]);
+    return 1;
+  }
+  
+  /* verified, MacOSX, OpenBSD */
+  /* short name */
 #ifdef HAVE_GETPROGNAME
-    /* BSD's libc provides a way */
+  /* BSD's libc provides a way */
   argv0 = getprogname(); /* not malloc'd memory, may return NULL */
   printf("Method 1: getprogname=[%s]\n", argv0);
 #endif
@@ -264,7 +268,7 @@ int main(int ac, char *av[]) {
       for (int i = 0; i < numproc; i++) {
         if (pinfo[i].pi_state == SZOMB)
                 continue;
-        if (getpid() == pinfo[i].pi_pid) {
+        if (getpid() == (pid_t)pinfo[i].pi_pid) {
           argv0 = pinfo[i].pi_comm;
           printf("Method 13: getprocs=[%s]\n", argv0);
         }
