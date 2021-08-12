@@ -49,19 +49,19 @@ extern int readlink(const char *, char *, size_t);
 
 
 #ifndef MAXPATHLEN
-#  define MAXPATHLEN 1024
+#  define MAXPATHLEN 4096
 #endif
 
 
 int main(int ac, char *av[]) {
-  const char *argv0 = NULL;
   char buf[MAXPATHLEN] = {0};
+  const char *argv0 = buf;
 
   if (ac > 1) {
     printf("Usage: %s\n", av[0]);
     return 1;
   }
-  
+
   /* verified, MacOSX, OpenBSD */
   /* short name */
 #ifdef HAVE_GETPROGNAME
@@ -245,6 +245,7 @@ int main(int ac, char *av[]) {
 
     /* verified, AIX */
     /* relative path on AIX */
+#  ifdef HAVE_SYS_PROCFS_H
     {
       struct psinfo p;
       int fd;
@@ -256,10 +257,11 @@ int main(int ac, char *av[]) {
       close(fd);
       argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
       if (argv0)
-	memcpy(buf, argv0, strlen(argv0)+1);
+        memcpy(buf, argv0, strlen(argv0)+1);
       if (buf[0])
-	printf("Method 11e: readlink(%s)=[%s]\n", pbuf, buf);
+        printf("Method 11e: readlink(%s)=[%s]\n", pbuf, buf);
     }
+#  endif
   }
 #endif
 
