@@ -27,15 +27,15 @@
 #  include <procinfo.h>
 #endif
 
-#ifdef _WIN32
+#ifdef HAVE_WINDOWS_H
 #  include <windows.h>
 #endif
 
-#ifdef __APPLE__
+#ifdef HAVE_MACH_O_DYLD_H
 #  include <mach-o/dyld.h>
 #endif
 
-#ifdef __HAIKU__
+#ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
 #endif
 
