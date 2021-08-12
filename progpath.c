@@ -285,7 +285,9 @@ int main(int ac, char *av[]) {
     int numproc;
     int index = 0;
     pid_t proc1 = (pid_t)0;
-    int proccnt = getprocs64(NULL, 0, NULL, 0, &proc1, 999999);
+
+    // get up to 1M procs, same limit as IBM ps command
+    int proccnt = getprocs64(NULL, 0, NULL, 0, &proc1, 1000000); 
     pentry = malloc(sizeof(struct procentry64) * proccnt);
     while ((numproc = getprocs64(pentry, sizeof(struct procentry64), NULL, 0, &index, proccnt)) > 0) {
       for (int i = 0; i < numproc; i++) {
