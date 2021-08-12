@@ -20,6 +20,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
 #endif
+#ifdef HAVE_SYS_PROCFS_H
+#  include <sys/procfs.h>
+#endif
 #ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
 #endif
@@ -212,7 +215,6 @@ int main(int ac, char *av[]) {
   // OBSD: /proc/curproc/file
   // OSF: /proc/%d
   // SYSV: /proc/%d/cmdline
-
 #ifdef HAVE_READLINK
   /* verified, Linux */
   memset(buf, 0, sizeof(buf));
@@ -244,6 +246,24 @@ int main(int ac, char *av[]) {
     readlink(pbuf, buf, sizeof(buf));
     if (buf[0])
       printf("Method 11d: readlink(%s)=[%s]\n", pbuf, buf);
+
+    /* verified, AIX */
+    /* relative path on AIX */
+    {
+      struct psinfo p;
+      int fd;
+
+      memset(buf, 0, sizeof(buf));
+      snprintf(pbuf, sizeof(pbuf), "/proc/%d/psinfo", getpid());
+      fd = open(pbuf, O_RDONLY);
+      read(fd, &p, sizeof(p));
+      close(fd);
+      argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
+      if (argv0)
+	memcpy(buf, argv0, strlen(argv0)+1);
+      if (buf[0])
+	printf("Method 11e: readlink(%s)=[%s]\n", pbuf, buf);
+    }
   }
 #endif
 
