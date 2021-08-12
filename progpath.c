@@ -20,26 +20,23 @@
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_PROCFS_H
+#ifdef HAVE_SYS_PROCFS_H /* for psinfo */
 #  include <sys/procfs.h>
 #endif
-#ifdef HAVE_DLFCN_H
+#ifdef HAVE_DLFCN_H /* for dladdr */
 #  include <dlfcn.h>
+#endif
+#ifdef HAVE_MACH_O_DYLD_H /* for dladdr */
+#  include <mach-o/dyld.h>
 #endif
 #ifdef HAVE_PROCINFO_H
 #  include <procinfo.h>
 #endif
-
-#ifdef HAVE_WINDOWS_H
-#  include <windows.h>
-#endif
-
-#ifdef HAVE_MACH_O_DYLD_H
-#  include <mach-o/dyld.h>
-#endif
-
 #ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#  include <windows.h>
 #endif
 
 
@@ -49,7 +46,6 @@ extern int getpid(void);
 extern void proc_pidpath(int, char *, size_t);
 /* or ssize_t return */
 extern int readlink(const char *, char *, size_t);
-
 
 
 #ifndef MAXPATHLEN
