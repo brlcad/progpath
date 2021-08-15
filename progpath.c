@@ -1,5 +1,8 @@
 
 #include "progpath_config.h"
+#include "progpath.h"
+
+#ifndef BUILD_BINARY
 
 #define _GNU_SOURCE 1
 
@@ -7,18 +10,19 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <assert.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
-#  include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H /* for wait */
 #  include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 #  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
+#  include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_PROCFS_H /* for psinfo */
 #  include <sys/procfs.h>
@@ -39,7 +43,6 @@
 #  include <windows.h>
 #endif
 
-
 extern const char *getprogname(void);
 extern const char *getexecname(void);
 extern int getpid(void);
@@ -53,15 +56,18 @@ extern int readlink(const char *, char *, size_t);
 #endif
 
 
-int main(int ac, char *av[]) {
-  char buf[MAXPATHLEN] = {0};
-  const char *argv0 = buf;
+char *progpath(char *buf, size_t len) {
+  const char *argv0;
 
-  if (ac > 1) {
-    printf("Usage: %s\n", av[0]);
-    return 1;
+  if (!buf || !len) {
+    len = MAXPATHLEN;
+    buf = calloc(len, sizeof(char));
+    assert(buf);
   }
 
+  argv0 = buf;
+
+  printf("meth1: ...");
   /* verified, MacOSX, OpenBSD */
   /* short name */
 #ifdef HAVE_GETPROGNAME
@@ -69,6 +75,7 @@ int main(int ac, char *av[]) {
   argv0 = getprogname(); /* not malloc'd memory, may return NULL */
   printf("Method 1: getprogname=[%s]\n", argv0);
 #endif
+  printf("...done meth1\n");
 
 #ifdef HAVE_GETEXECNAME
   argv0 = getexecname();
@@ -77,10 +84,10 @@ int main(int ac, char *av[]) {
 
 #ifdef HAVE_GETMODULEFILENAME
   {
-    TCHAR exeFileName[MAXPATHLEN] = {0};
-    GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
+    TCHAR exeFileName[len] = {0};
+    GetModuleFileName(NULL, exeFileName, len);
     if (sizeof(TCHAR) == sizeof(char))
-	    bu_strlcpy(buf, exeFileName, MAXPATHLEN);
+	    bu_strlcpy(buf, exeFileName, len);
     else
 	    wcstombs(buf, exeFileName, wcslen(buf)+1);
     printf("Method 3: GetModuleFileName=[%s]\n", buf);
@@ -91,7 +98,7 @@ int main(int ac, char *av[]) {
 #ifdef HAVE_PROC_PIDPATH
   {
     int pid = getpid();
-    (void)proc_pidpath(pid, buf, sizeof(buf));
+    (void)proc_pidpath(pid, buf, len);
     printf("Method 4: proc_pidpath=[%s]\n", buf);
   }
 #endif
@@ -136,18 +143,17 @@ int main(int ac, char *av[]) {
 #if defined(HAVE_SYSCTL)
   {
     int mib[4];
-    size_t len = sizeof(buf);
 
     /* verified, FreeBSD */
 #  if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, len;
     mib[0] = CTL_KERN;  mib[1] = KERN_PROC;  mib[2] = KERN_PROC_PATHNAME;  mib[3] = -1;
     sysctl(mib, 4, buf, &len, NULL, 0);
     printf("Method 8: sysctl(KERN_PROC)=[%s]\n", buf);
 #  endif
 
 #  if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, len);
     mib[0] = CTL_KERN;  mib[1] = KERN_PROC_ARGS;  mib[2] = -1;  mib[3] = KERN_PROC_PATHNAME;
     sysctl(mib, 4, buf, &len, NULL, 0);
     printf("Method 8a: sysctl(KERN_PROC_ARGS)=[%s]\n", buf);
@@ -156,7 +162,7 @@ int main(int ac, char *av[]) {
     /* verified, MacOSX */
     /* short name */
 #  if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(KERN_PROCNAME)
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0, len);
     mib[0] = CTL_KERN;  mib[1] = KERN_PROCNAME;  mib[2] = -1 ;  mib[3] = -1;
     sysctl(mib, 2, buf, &len, NULL, 0);
     printf("Method 8b: sysctl(KERN_PROCNAME)=[%s]\n", buf);
@@ -167,7 +173,7 @@ int main(int ac, char *av[]) {
 #  if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
     {
       char **retargs;
-      memset(buf, 0, sizeof(buf));
+      memset(buf, 0, len);
       mib[0] = CTL_KERN;  mib[1] = KERN_PROC_ARGS;  mib[2] = getpid();  mib[3] = KERN_PROC_ARGV;
       sysctl(mib, 4, NULL, &len, NULL, 0);
       retargs = malloc(sizeof(char *) * len);
@@ -184,7 +190,6 @@ int main(int ac, char *av[]) {
     /* short name */
 #if defined(HAVE_SYSCTLBYNAME)
   {
-    size_t len = sizeof(buf);
     sysctlbyname("kern.procname", buf, &len, NULL, 0);
     printf("Method 9: sysctlbyname(kern.procname)=[%s]\n", buf);
   }
@@ -193,14 +198,14 @@ int main(int ac, char *av[]) {
     /* verified, MacOSX */
 #ifdef HAVE__NSGETEXECUTABLEPATH
   {
-    uint32_t len = sizeof(buf);
-    _NSGetExecutablePath(buf, &len);
+    uint32_t ulen = len;
+    _NSGetExecutablePath(buf, &ulen);
     printf("Method 10: _NSGetExecutablePath=[%s]\n", buf);
   }
 #endif
 
 #ifdef HAVE_FIND_PATH
-  find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, buf, sizeof(buf));
+  find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, buf, len);
   printf("Method 11: find_path=[%s]\n", buf);
 #endif
 
@@ -213,33 +218,33 @@ int main(int ac, char *av[]) {
   // SYSV: /proc/%d/cmdline
 #ifdef HAVE_READLINK
   /* verified, Linux */
-  memset(buf, 0, sizeof(buf));
-  readlink("/proc/self/exe", buf, sizeof(buf));
+  memset(buf, 0, len);
+  readlink("/proc/self/exe", buf, len);
   if (buf[0])
     printf("Method 11: readlink(/proc/self/exe)=[%s]\n", buf);
 
-  memset(buf, 0, sizeof(buf));
-  readlink("/proc/curproc/file", buf, sizeof(buf));
+  memset(buf, 0, len);
+  readlink("/proc/curproc/file", buf, len);
   if (buf[0])
     printf("Method 11a: readlink(/proc/curproc/file)=[%s]\n", buf);
 
-  memset(buf, 0, sizeof(buf));
-  readlink("/proc/pinfo", buf, sizeof(buf));
+  memset(buf, 0, len);
+  readlink("/proc/pinfo", buf, len);
   if (buf[0])
     printf("Method 11b: readlink(/proc/pinfo)=[%s]\n", buf);
 
   {
     char pbuf[MAXPATHLEN] = {0};
 
-    memset(buf, 0, sizeof(buf));
-    snprintf(pbuf, sizeof(pbuf), "/proc/%d", getpid());
-    readlink(pbuf, buf, sizeof(buf));
+    memset(buf, 0, len);
+    snprintf(pbuf, len, "/proc/%d", getpid());
+    readlink(pbuf, buf, len);
     if (buf[0])
       printf("Method 11c: readlink(%s)=[%s]\n", pbuf, buf);
 
-    memset(buf, 0, sizeof(buf));
-    snprintf(pbuf, sizeof(pbuf), "/proc/%d/cmdline", getpid());
-    readlink(pbuf, buf, sizeof(buf));
+    memset(buf, 0, len);
+    snprintf(pbuf, len, "/proc/%d/cmdline", getpid());
+    readlink(pbuf, buf, len);
     if (buf[0])
       printf("Method 11d: readlink(%s)=[%s]\n", pbuf, buf);
 
@@ -250,8 +255,8 @@ int main(int ac, char *av[]) {
       struct psinfo p;
       int fd;
 
-      memset(buf, 0, sizeof(buf));
-      snprintf(pbuf, sizeof(pbuf), "/proc/%d/psinfo", getpid());
+      memset(buf, 0, len);
+      snprintf(pbuf, len, "/proc/%d/psinfo", getpid());
       fd = open(pbuf, O_RDONLY);
       read(fd, &p, sizeof(p));
       close(fd);
@@ -320,7 +325,6 @@ int main(int ac, char *av[]) {
   }
 #endif
 
-
   // HPUX64: pstat_getproc64()
   // HPUX: pstat_getproc()
   // IBM: w_getpsent()
@@ -329,5 +333,33 @@ int main(int ac, char *av[]) {
 
   printf("Done\n");
 
+  return buf;
+}
+
+#else
+/* build a simple main that executes the API call */
+
+#include <stdio.h>
+#include <stdlib.h>
+#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
+#  include <sys/param.h>
+#endif
+
+#ifndef MAXPATHLEN
+#  define MAXPATHLEN 4096
+#endif
+
+
+int main(int ac, char *av[]) {
+  char buf[MAXPATHLEN] = {0};
+
+  if (ac > 1) {
+    printf("Usage: %s\n", av[0]);
+    return 1;
+  }
+
+  progpath(buf, MAXPATHLEN);
+
   return 0;
 }
+#endif
