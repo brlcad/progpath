@@ -164,8 +164,7 @@ char *progpath(char *buf, size_t buflen) {
   if (progpath_debug)
     debug = atoi(progpath_debug);
 
-  /* verified, MacOSX, OpenBSD */
-  /* short name */
+  /* verified, short: MacOSX, OpenBSD */
 #ifdef HAVE_GETPROGNAME
   {
     struct method m = {++method, __LINE__, "getprogname", debug};
@@ -178,7 +177,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED, Sun */
+  /* UNVERIFIED: Sun */
 #ifdef HAVE_GETEXECNAME
   {
     struct method m = {++method, __LINE__, "getexecname", debug};
@@ -191,6 +190,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Windows */
 #ifdef HAVE_GETMODULEFILENAME
   {
     struct method m = {++method, __LINE__, "GetModuleFileName", debug};
@@ -208,7 +208,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
+  /* verified, full: MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
     struct method m = {++method, __LINE__, "proc_pidpath", debug};
@@ -221,8 +221,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, Linux */
-  /* relative path name */
+  /* verified, relative: Linux */
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
   extern char *program_invocation_name;
   if (program_invocation_name) {
@@ -235,8 +234,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, Linux */
-  /* short name */
+  /* verified, short: Linux */
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
   extern char *program_invocation_short_name;
   if (program_invocation_short_name) {
@@ -249,6 +247,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Windows */
 #ifdef HAVE_DECL___ARGV
   extern char **__argv;
   if (__argv) {
@@ -261,8 +260,8 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, Linux, MacOSX */
-  /* relative path name */
+  /* UNVERIFIED, relative path: Linux */
+  /* verified, short name: MacOSX */
 #ifdef HAVE_DECL___PROGNAME_FULL
   extern char *__progname_full;
   if (__progname_full) {
@@ -275,8 +274,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, Linux, OpenBSD */
-  /* short name */
+  /* UNVERIFIED, short: Linux, OpenBSD */
 #ifdef HAVE_DECL___PROGNAME
   extern char *__progname;
   if (__progname) {
@@ -319,8 +317,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
-  /* relative path name */
+  /* verified, relative: MacOSX */
  #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
   {
     struct method m = {++method, __LINE__, "sysctl(KERN_PROCARGS2)", debug};
@@ -342,8 +339,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
-  /* short name */
+  /* verified, short: MacOSX */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
   {
     struct method m = {++method, __LINE__, "sysctl(KERN_PROCNAME)", debug};
@@ -358,8 +354,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, OpenBSD */
-  /* relative path name */
+  /* verified, relative: OpenBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
   {
     struct method m = {++method, __LINE__, "sysctl(KERN_PROCNAME)", debug};
@@ -378,8 +373,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
-  /* short name */
+  /* verified, short: MacOSX */
 #if defined(HAVE_SYSCTLBYNAME)
   {
     struct method m = {++method, __LINE__, "sysctlbyname(kern.procname)", debug};
@@ -393,7 +387,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
+  /* verified, full: MacOSX */
 #ifdef HAVE__NSGETEXECUTABLEPATH
   {
     struct method m = {++method, __LINE__, "_NSGetExecutablePath", debug};
@@ -407,6 +401,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Haiku */
 #ifdef HAVE_FIND_PATH
   {
     struct method m = {++method, __LINE__, "find_path", debug};
@@ -418,17 +413,9 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-  /* PID-based methods */
 
-  // IRIX: /proc/pinfo
-  // LINUX: /proc/self/exe
-  // OBSD: /proc/curproc/file
-  // OSF: /proc/%d
-  // SYSV: /proc/%d/cmdline
-
-
+  /* UNVERIFIED, Linux */
 #ifdef HAVE_READLINK
-  /* verified, Linux */
   {
     struct method m = {++method, __LINE__, "readlink(/proc/self/exe)", debug};
     char mbuf[MAXPATHLEN] = {0};
@@ -440,6 +427,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: OpenBSD */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/curproc/file)", debug};
@@ -452,6 +440,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: IRIX */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/pinfo)", debug};
@@ -464,6 +453,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: OSF */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/$PID)", debug};
@@ -478,6 +468,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Solaris */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/$PID/cmdline)", debug};
@@ -492,8 +483,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, AIX */
-  /* relative path on AIX */
+  /* verified, relative: AIX */
 #if defined(HAVE_READLINK) && defined(HAVE_SYS_PROCFS_H)
   {
     struct method m = {++method, __LINE__, "readlink(/proc/$PID/psinfo)", debug};
@@ -514,14 +504,16 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, MacOSX */
-  /* relative path on OBSD */
+  /* verified, full: MacOSX */
+  /* verified, relative: OpenBSD */
 #ifdef HAVE_DLADDR
   {
+    //extern int (main)(int ac, char **);
     struct method m = {++method, __LINE__, "dladdr(main)", debug};
     char mbuf[MAXPATHLEN] = {0};
     Dl_info i;
-    dladdr(&main, &i);
+    const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
+    dladdr(mainfunc, &i);
     finalize(m, mbuf, MAXPATHLEN, i.dli_fname);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
@@ -529,8 +521,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, AIX */
-  /* short name */
+  /* verified, short: AIX */
 #ifdef HAVE_GETPROCS
   {
     struct method m = {++method, __LINE__, "getprocs", debug};
@@ -556,8 +547,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, AIX */
-  /* short name */
+  /* verified, short: AIX */
 #ifdef HAVE_GETPROCS64
   {
     struct method m = {++method, __LINE__, "getprocs64", debug};
@@ -587,12 +577,6 @@ char *progpath(char *buf, size_t buflen) {
       return buf;
   }
 #endif
-
-  // HPUX64: pstat_getproc64()
-  // HPUX: pstat_getproc()
-  // IBM: w_getpsent()
-
-  /* TODO: PATH-based methods */
 
   return buf;
 }

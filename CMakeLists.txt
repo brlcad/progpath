@@ -21,7 +21,7 @@ add_library(progpath SHARED progpath.c)
 
 add_executable(progpath-bin progpath.h;progpath.c)
 set_target_properties(progpath-bin PROPERTIES OUTPUT_NAME progpath)
-target_link_libraries(progpath-bin LINK_PUBLIC progpath-static)
+target_link_libraries(progpath-bin LINK_PUBLIC progpath)
 target_compile_definitions(progpath-bin PUBLIC BUILD_BINARY)
 target_include_directories(progpath-bin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
