@@ -34,9 +34,25 @@ target_include_directories(progpath-bin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_compile_options(progpath PRIVATE
    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
+)
+target_link_options(progpath PRIVATE
+   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
+)
+target_compile_options(progpath-static PRIVATE
+   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
+)
+target_link_options(progpath-static PRIVATE
+   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
 )
 target_compile_options(progpath-bin PRIVATE
    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
+)
+target_link_options(progpath-bin PRIVATE
+   $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -pedantic -Werror -g -ggdb>
 )
