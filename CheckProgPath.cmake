@@ -8,11 +8,19 @@ include(CheckCSourceCompiles)
 function(CHECK_PROG_PATH)
 
   find_library(BSD_LIBRARY bsd)
-  find_library(C_LIBRARY c)
+  if (BSD_LIBRARY)
+    set(PP_LIBRARIES ${PP_LIBRARIES} ${BSD_LIBRARY})
+    set(CMAKE_REQUIRED_LIBRARIES "${BSD_LIBRARY}")
+  endif (BSD_LIBRARY)
 
-  if (${BSD_LIBRARY})
-    set(CMAKE_REQUIRED_LIBRARIES "${BSD_LIBRARY};${C_LIBRARY}")
-  endif (${BSD_LIBRARY})
+  find_library(C_LIBRARY c)
+  if (C_LIBRARY)
+    set(PP_LIBRARIES ${PP_LIBRARIES} ${C_LIBRARY})
+    set(CMAKE_REQUIRED_LIBRARIES "${C_LIBRARY}")
+  endif (C_LIBRARY)
+
+  set(PROGPATH_LIBRARIES ${PP_LIBRARIES} CACHE STRING "ProgPath libraries")
+  mark_as_advanced(PROGPATH_LIBRARIES)
 
   check_c_source_compiles("typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
   #check_include_file("sys/sysctl.h" HAVE_SYS_SYSCTL_H)
