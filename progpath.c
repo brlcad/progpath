@@ -67,27 +67,32 @@ char *progpath(char *buf, size_t buflen) {
     assert(buf);
   }
 
+
   /* verified, MacOSX, OpenBSD */
   /* short name */
 #ifdef HAVE_GETPROGNAME
   {
-    const char *argv0 = buf;
-    argv0 = getprogname(); /* not malloc'd memory, may return NULL */
-    strncpy(buf, argv0, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: getprogname=[%s]\n", ++method, __LINE__, buf);
+    const char *argv0 = getprogname(); /* not malloc'd memory, may return NULL */
+    if (argv0) {
+      strncpy(buf, argv0, buflen-1);
+      if (debug)
+        printf("Method %0.2d, line %0.4d: getprogname=[%s]\n", ++method, __LINE__, buf);
+    }
   }
 #endif
 
+
 #ifdef HAVE_GETEXECNAME
   {
-    const char *argv0 = buf;
-    argv0 = getexecname();
-    strncpy(buf, argv0, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: getexecname=[%s]\n", ++method, __LINE__, buf);
+    const char *argv0 = getexecname();
+    if (argv0) {
+      strncpy(buf, argv0, buflen-1);
+      if (debug)
+        printf("Method %0.2d, line %0.4d: getexecname=[%s]\n", ++method, __LINE__, buf);
+    }
   }
 #endif
+
 
 #ifdef HAVE_GETMODULEFILENAME
   {
@@ -103,6 +108,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
@@ -112,6 +118,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: proc_pidpath=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, Linux */
   /* relative path name */
@@ -124,6 +131,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, Linux */
   /* short name */
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
@@ -135,6 +143,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
 #ifdef HAVE_DECL___ARGV
   {
     const char *argv0 = buf;
@@ -144,6 +153,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: __argv=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, Linux, MacOSX */
   /* relative path name */
@@ -158,6 +168,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, Linux, OpenBSD */
   /* short name */
 #ifdef HAVE_DECL___PROGNAME
@@ -170,6 +181,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: __progname=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, FreeBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
@@ -185,6 +197,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     int mib[4];
@@ -197,6 +210,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: sysctl(KERN_PROC_ARGS)=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, MacOSX */
   /* relative path name */
@@ -220,6 +234,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, MacOSX */
   /* short name */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
@@ -234,6 +249,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: sysctl(KERN_PROCNAME)=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, OpenBSD */
   /* relative path name */
@@ -253,6 +269,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, MacOSX */
   /* short name */
 #if defined(HAVE_SYSCTLBYNAME)
@@ -266,6 +283,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, MacOSX */
 #ifdef HAVE__NSGETEXECUTABLEPATH
   {
@@ -276,6 +294,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %0.2d, line %0.4d: _NSGetExecutablePath=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
 #ifdef HAVE_FIND_PATH
   {
@@ -294,6 +313,7 @@ char *progpath(char *buf, size_t buflen) {
   // OSF: /proc/%d
   // SYSV: /proc/%d/cmdline
 
+
 #ifdef HAVE_READLINK
   /* verified, Linux */
   {
@@ -306,6 +326,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
 #ifdef HAVE_READLINK
   {
     memset(buf, 0, buflen);
@@ -317,6 +338,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
 #ifdef HAVE_READLINK
   {
     memset(buf, 0, buflen);
@@ -327,6 +349,7 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
+
 
 #ifdef HAVE_READLINK
   {
@@ -340,6 +363,7 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
+
 
 #ifdef HAVE_READLINK
   {
@@ -378,6 +402,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
   /* verified, MacOSX */
   /* relative path on OBSD */
 #ifdef HAVE_DLADDR
@@ -390,6 +415,7 @@ char *progpath(char *buf, size_t buflen) {
       printf("Method %d: dladdr(main)=[%s]\n", ++method, __LINE__, buf);
   }
 #endif
+
 
   /* verified, AIX */
   /* short name */
@@ -413,6 +439,7 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
+
 
   /* verified, AIX */
   /* short name */
@@ -451,8 +478,10 @@ char *progpath(char *buf, size_t buflen) {
   return buf;
 }
 
+
 #else
 /* build a simple main that executes the API call */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -482,4 +511,5 @@ int main(int ac, char *av[]) {
   fprintf(stderr, "ERROR: failed to get the program's path\n");
   return 1;
 }
+
 #endif
