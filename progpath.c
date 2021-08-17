@@ -199,6 +199,28 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
   /* verified, MacOSX */
+  /* relative path name */
+ #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
+  {
+    int mib[4];
+    size_t len;
+    size_t size;
+    int argmax;
+    char *pbuf;
+    memset(buf, 0, buflen);
+    mib[0] = CTL_KERN;  mib[1] = KERN_ARGMAX; mib[2] = -1; mib[3] = -1;
+    sysctl(mib, 2, &argmax, &len, NULL, 0);
+    pbuf = calloc(argmax, sizeof(char));
+    mib[0] = CTL_KERN;  mib[1] = KERN_PROCARGS2;  mib[2] = getpid();  mib[3] = -1;
+    size = (size_t)argmax; // must be full size or sysctl returns nothing
+    sysctl(mib, 3, pbuf, &size, NULL, 0);
+    strncpy(buf, (pbuf+sizeof(int)), buflen); // from sysctl, exec_path comes after argc
+    if (debug)
+      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROCARGS2)=[%s]\n", ++method, __LINE__, buf);
+  }
+#endif
+
+  /* verified, MacOSX */
   /* short name */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
   {
