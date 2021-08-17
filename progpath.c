@@ -64,12 +64,19 @@ struct method {
   int id;
   int line;
   const char *label;
-  int print;
+  int debug;
+};
+
+
+enum {
+  PP_DEFAULT = 0,
+  PP_PRINT = 1,
+  PP_CONTINUE = 2
 };
 
 
 static void print_method(struct method m, const char *result) {
-  if (m.print)
+  if (m.debug >= PP_PRINT)
     printf("Method %0.2d, line %0.4d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
 
@@ -117,19 +124,45 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
 }
 
 
+static int we_done_yet(struct method m, char *buf, size_t buflen, const char *path) {
+  size_t pathlen;
+  if (!path)
+    return 0;
+
+  pathlen = strlen(path);
+  if (pathlen < 2)
+    return 0;
+
+  /* if we seem to have a full path, we're done */
+  if ((path[0] == '/') ||
+      (pathlen > 2 && path[0] >= 'A' && path[0] <= 'Z' && path[1] == ':' && path[2] == '\\')) {
+
+    if (!buf || !buflen) {
+      buflen = MAXPATHLEN;
+      buf = calloc(buflen, sizeof(char));
+      assert(buf);
+    }
+
+    strncpy(buf, path, buflen-1);
+
+    if (m.debug >= PP_CONTINUE)
+      return 0;
+    return 1;
+  }
+
+  return 0;
+}
+
+
 char *progpath(char *buf, size_t buflen) {
   int method = 0;
 
+  /* environment variable can be set for debug printing */
   const char *progpath_debug = getenv("PROGPATH_DEBUG");
-  int debug = (progpath_debug) ? 1 : 0;
+  int debug = 0;
 
-  /* FIXME: should only allocate if returning a result */
-  if (!buf || !buflen) {
-    buflen = MAXPATHLEN;
-    buf = calloc(buflen, sizeof(char));
-    assert(buf);
-  }
-
+  if (progpath_debug)
+    debug = atoi(progpath_debug);
 
   /* verified, MacOSX, OpenBSD */
   /* short name */
@@ -139,6 +172,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getprogname(); /* not malloc'd memory, may return NULL */
     finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -150,6 +185,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getexecname();
     finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -165,6 +202,8 @@ char *progpath(char *buf, size_t buflen) {
     else
 	    wcstombs(mbuf, exeFileName, wcslen(mbuf)+1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -176,6 +215,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     (void)proc_pidpath(getpid(), mbuf, buflen);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -188,6 +229,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "program_invocation_name", debug};
     char mbuf[MAXPATHLEN] = {0};
     finalize(m, mbuf, MAXPATHLEN, program_invocation_name);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -200,6 +243,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "program_invocation_short_name", debug};
     char mbuf[MAXPATHLEN] = {0};
     finalize(m, mbuf, MAXPATHLEN, program_invocation_short_name);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -210,6 +255,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "__argv", debug};
     char mbuf[MAXPATHLEN] = {0};
     finalize(m, mbuf, MAXPATHLEN, __argv[0]);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -222,6 +269,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "__progname_full", debug};
     char mbuf[MAXPATHLEN] = {0};
     finalize(m, mbuf, MAXPATHLEN, __progname_full);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -234,6 +283,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "__progname", debug};
     char mbuf[MAXPATHLEN] = {0};
     finalize(m, mbuf, MAXPATHLEN, __progname);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -247,6 +298,8 @@ char *progpath(char *buf, size_t buflen) {
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     sysctl(mib, 4, mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -260,6 +313,8 @@ char *progpath(char *buf, size_t buflen) {
     len = buflen;
     sysctl(mib, 4, buf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -281,6 +336,8 @@ char *progpath(char *buf, size_t buflen) {
     pbufsz = (size_t)argmax; // must be full size or sysctl returns nothing
     sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* from sysctl, exec_path comes after argc */
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -295,6 +352,8 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN-1;
     sysctl(mib, 2, mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -313,6 +372,8 @@ char *progpath(char *buf, size_t buflen) {
     sysctl(mib, 4, retargs, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, regargs[0]);
     free(retargs);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -326,6 +387,8 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN-1;
     sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -338,6 +401,8 @@ char *progpath(char *buf, size_t buflen) {
     uint32_t ulen = MAXPATHLEN-1;
     _NSGetExecutablePath(mbuf, &ulen);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -348,6 +413,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, mbuf, MAXPATHLEN);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -367,6 +434,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     readlink("/proc/self/exe", mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -377,6 +446,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     readlink("/proc/curproc/file", mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -387,6 +458,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -399,6 +472,8 @@ char *progpath(char *buf, size_t buflen) {
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -411,6 +486,8 @@ char *progpath(char *buf, size_t buflen) {
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -431,6 +508,8 @@ char *progpath(char *buf, size_t buflen) {
     close(fd);
     argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
     finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -444,6 +523,8 @@ char *progpath(char *buf, size_t buflen) {
     Dl_info i;
     dladdr(&main, &i);
     finalize(m, mbuf, MAXPATHLEN, i.dli_fname);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -469,6 +550,8 @@ char *progpath(char *buf, size_t buflen) {
         }
       }
     }
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
@@ -500,6 +583,8 @@ char *progpath(char *buf, size_t buflen) {
       }
     }
     free(pentry);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
   }
 #endif
 
