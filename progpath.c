@@ -4,6 +4,7 @@
 
 #ifndef BUILD_BINARY
 
+/* use any method at our disposal */
 #define _GNU_SOURCE 1
 
 #include <stdlib.h>
@@ -47,8 +48,7 @@ extern const char *getprogname(void);
 extern const char *getexecname(void);
 extern int getpid(void);
 extern void proc_pidpath(int, char *, size_t);
-/* or ssize_t return */
-extern int readlink(const char *, char *, size_t);
+extern int readlink(const char *, char *, size_t); /* or ssize_t return */
 
 
 #ifndef MAXPATHLEN
@@ -60,6 +60,7 @@ extern int readlink(const char *, char *, size_t);
 #endif
 
 
+/* stateful structure used for debugging */
 struct method {
   int id;
   int line;
@@ -68,6 +69,7 @@ struct method {
 };
 
 
+/* debug states */
 enum {
   PP_DEFAULT = 0,
   PP_PRINT = 1,
@@ -75,12 +77,18 @@ enum {
 };
 
 
+/* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
+ * print useful debugging lines for methods that have results.
+ */
 static void print_method(struct method m, const char *result) {
   if (m.debug >= PP_PRINT)
     printf("Method %0.2d, line %0.4d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
 
 
+/* this function expands a given path, only modifying 'buf' with the
+ * full path if it appears to have succeeded.
+ */
 static void resolve_to_full_path(char *buf, size_t buflen) {
   char rbuf[MAXPATHLEN] = {0};
 
@@ -108,6 +116,11 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
 }
 
 
+/* perform operations common to every method.  given a final output
+ * buffer and an optional 'result' path, expand it to a full path,
+ * printing debugging lines before and after expansion if enabled.
+ * if 'result' is NULL, it will use the path in 'buf'.
+ */
 static void finalize(struct method m, char *buf, size_t buflen, const char *result) {
   if (!buf || buflen < 1)
     return;
@@ -124,6 +137,10 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
 }
 
 
+/* cheeky function checks whather we seem to have a full 'path',
+ * writing a full path to the 'buf' output buffer or dynamically
+ * allocating if 'buf' is NULL.
+ */
 static int we_done_yet(struct method m, char *buf, size_t buflen, const char *path) {
   size_t pathlen;
   if (!path)
@@ -154,6 +171,12 @@ static int we_done_yet(struct method m, char *buf, size_t buflen, const char *pa
 }
 
 
+/* main workhorse.  if 'buf' is NULL and a full path is identified,
+ * memory is allocated dynamically, returned, and caller must call
+ * free() it.  function returns NULL and 'buf' is unmodified if
+ * program path cannot be found.  function returns pointer to path
+ * held in 'buf'
+ */
 char *progpath(char *buf, size_t buflen) {
   int method = 0;
 
