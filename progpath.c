@@ -28,8 +28,14 @@
 #ifdef HAVE_SYS_PROCFS_H /* for psinfo */
 #  include <sys/procfs.h>
 #endif
+#ifdef HAVE_SYS_IOCTL_H /* for ioctl */
+#  include <sys/ioctl.h>
+#endif
 #ifdef HAVE_DLFCN_H /* for dladdr */
 #  include <dlfcn.h>
+#endif
+#ifdef HAVE_FCNTL_H /* for open */
+#  include <fcntl.h>
 #endif
 #ifdef HAVE_MACH_O_DYLD_H /* for dladdr */
 #  include <mach-o/dyld.h>
@@ -283,8 +289,8 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED, relative path: Linux */
-  /* verified, short name: MacOSX */
+  /* UNVERIFIED, relative: Linux */
+  /* verified, short: MacOSX */
 #ifdef HAVE_DECL___PROGNAME_FULL
   extern char *__progname_full;
   if (__progname_full) {
@@ -298,6 +304,7 @@ char *progpath(char *buf, size_t buflen) {
 
 
   /* UNVERIFIED, short: Linux, OpenBSD */
+  /* verified, short: FreeBSD */
 #ifdef HAVE_DECL___PROGNAME
   extern char *__progname;
   if (__progname) {
@@ -310,7 +317,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, FreeBSD */
+  /* verified, full: FreeBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     struct method m = {++method, __LINE__, "sysctl(KERN_PROC)", debug};
@@ -507,7 +514,7 @@ char *progpath(char *buf, size_t buflen) {
 
 
   /* (RECHECK)verified, relative: AIX */
-#ifdef HAVE_DECL_STRUCT_PSINFO
+#ifdef HAVE_STRUCT_PSINFO
   {
     struct method m = {++method, __LINE__, "read(/proc/$PID/psinfo)", debug};
     char mbuf[MAXPATHLEN] = {0};
@@ -527,8 +534,8 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: BSD */
-#ifdef HAVE_DECL_STRUCT_PRPSINFO
+  /* UNVERIFIED: BSD, IRIX */
+#if defined(HAVE_STRUCT_PRPSINFO) && defined(HAVE_DECL_PIOCPSINFO)
   {
     struct method m = {++method, __LINE__, "ioctl(/proc/$PID,prpsinfo)", debug};
     char mbuf[MAXPATHLEN] = {0};
@@ -541,6 +548,7 @@ char *progpath(char *buf, size_t buflen) {
     ioctl(fd, PIOCPSINFO, &p);
     close(fd);
     argv0 = p.pr_fname;
+    printf("av0 = %s\n",argv0);
     finalize(m, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
