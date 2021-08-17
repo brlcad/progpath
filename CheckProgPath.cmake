@@ -67,4 +67,7 @@ function(CHECK_PROG_PATH)
   check_symbol_exists(__progname stdlib.h HAVE_DECL___PROGNAME2)
   check_symbol_exists(__progname_full stdlib.h HAVE_DECL___PROGNAME_FULL2)
 
+  check_symbol_exists("struct psinfo" sys/procfs.h HAVE_DECL_STRUCT_PSINFO)
+  check_symbol_exists("struct prpsinfo" sys/procfs.h HAVE_DECL_STRUCT_PRPSINFO)
+  
 endfunction(CHECK_PROG_PATH)

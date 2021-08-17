@@ -483,10 +483,10 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, relative: AIX */
-#if defined(HAVE_READLINK) && defined(HAVE_SYS_PROCFS_H)
+  /* (RECHECK)verified, relative: AIX */
+#ifdef HAVE_DECL_STRUCT_PSINFO
   {
-    struct method m = {++method, __LINE__, "readlink(/proc/$PID/psinfo)", debug};
+    struct method m = {++method, __LINE__, "read(/proc/$PID/psinfo)", debug};
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     const char *argv0;
@@ -497,6 +497,27 @@ char *progpath(char *buf, size_t buflen) {
     read(fd, &p, sizeof(p));
     close(fd);
     argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: BSD */
+#ifdef HAVE_DECL_STRUCT_PRPSINFO
+  {
+    struct method m = {++method, __LINE__, "ioctl(/proc/$PID,prpsinfo)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    const char *argv0;
+    struct prpsinfo p;
+    int fd;
+    snprintf(pbuf, sizeof(pbuf), "/proc/%d", getpid());
+    fd = open(pbuf, O_RDONLY);
+    ioctl(fd, PIOCPSINFO, &p);
+    close(fd);
+    argv0 = p.pr_fname;
     finalize(m, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
