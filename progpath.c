@@ -52,13 +52,76 @@ extern int readlink(const char *, char *, size_t);
 
 
 #ifndef MAXPATHLEN
-#  define MAXPATHLEN 4096
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
+#  else
+#    define MAXPATHLEN 4096
+#  endif
 #endif
+
+
+struct method {
+  int id;
+  int line;
+  const char *label;
+  int print;
+};
+
+
+static void print_method(struct method m, const char *result) {
+  if (m.print)
+    printf("Method %0.2d, line %0.4d: %s=[%s]\n", m.id, m.line, m.label, result);
+}
+
+
+static void resolve_to_full_path(char *buf, size_t buflen) {
+  char rbuf[MAXPATHLEN] = {0};
+
+  if (!buf || buflen < 1)
+    return;
+
+  /* work on a copy */
+  strncpy(rbuf, buf, buflen-1);
+
+  /* resolve links and relative paths */
+  if (rbuf[0] == '/' || rbuf[0] == '.') {
+#ifdef HAVE_REALPATH
+    char rpbuf[MAXPATHLEN] = {0};
+    realpath(rbuf, rpbuf);
+    strncpy(rbuf, rpbuf, MAXPATHLEN);
+#endif
+  }
+
+  /* resolve via PATH */
+
+  /* copy full paths back to caller */
+  if (rbuf[0] == '/')
+    strncpy(buf, rbuf, buflen);
+
+}
+
+
+static void finalize(struct method m, char *buf, size_t buflen, const char *result) {
+  if (!buf || buflen < 1)
+    return;
+
+  if (result)
+    strncpy(buf, result, buflen-1);
+
+  if (buf[0] == 0)
+    return;
+
+  print_method(m, buf);
+  resolve_to_full_path(buf, MAXPATHLEN);
+  print_method(m, buf);
+}
 
 
 char *progpath(char *buf, size_t buflen) {
   int method = 0;
-  char *debug = getenv("PROGPATH_DEBUG");
+
+  const char *progpath_debug = getenv("PROGPATH_DEBUG");
+  int debug = (progpath_debug) ? 1 : 0;
 
   /* FIXME: should only allocate if returning a result */
   if (!buf || !buflen) {
@@ -72,39 +135,36 @@ char *progpath(char *buf, size_t buflen) {
   /* short name */
 #ifdef HAVE_GETPROGNAME
   {
+    struct method m = {++method, __LINE__, "getprogname", debug};
+    char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getprogname(); /* not malloc'd memory, may return NULL */
-    if (argv0) {
-      strncpy(buf, argv0, buflen-1);
-      if (debug)
-        printf("Method %0.2d, line %0.4d: getprogname=[%s]\n", ++method, __LINE__, buf);
-    }
+    finalize(m, mbuf, MAXPATHLEN, argv0);
   }
 #endif
 
 
+  /* UNVERIFIED, Sun */
 #ifdef HAVE_GETEXECNAME
   {
+    struct method m = {++method, __LINE__, "getexecname", debug};
+    char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getexecname();
-    if (argv0) {
-      strncpy(buf, argv0, buflen-1);
-      if (debug)
-        printf("Method %0.2d, line %0.4d: getexecname=[%s]\n", ++method, __LINE__, buf);
-    }
+    finalize(m, mbuf, MAXPATHLEN, argv0);
   }
 #endif
 
 
 #ifdef HAVE_GETMODULEFILENAME
   {
+    struct method m = {++method, __LINE__, "GetModuleFileName", debug};
+    char mbuf[MAXPATHLEN] = {0};
     TCHAR exeFileName[MAXPATHLEN] = {0};
     GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
-    memset(buf, 0, buflen);
     if (sizeof(TCHAR) == sizeof(char))
-	    strncpy(buf, exeFileName, buflen-1);
+	    strncpy(mbuf, exeFileName, MAXPATHLEN-1);
     else
-	    wcstombs(buf, exeFileName, wcslen(buf)+1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: GetModuleFileName=[%s]\n", ++method, __LINE__, buf);
+	    wcstombs(mbuf, exeFileName, wcslen(mbuf)+1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -112,10 +172,10 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
-    memset(buf, 0, buflen);
-    (void)proc_pidpath(getpid(), buf, buflen);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: proc_pidpath=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "proc_pidpath", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    (void)proc_pidpath(getpid(), mbuf, buflen);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -125,9 +185,9 @@ char *progpath(char *buf, size_t buflen) {
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
   extern char *program_invocation_name;
   if (program_invocation_name) {
-    strncpy(buf, program_invocation_name, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: program_invocation_name=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "program_invocation_name", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    finalize(m, mbuf, MAXPATHLEN, program_invocation_name);
   }
 #endif
 
@@ -137,20 +197,19 @@ char *progpath(char *buf, size_t buflen) {
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
   extern char *program_invocation_short_name;
   if (program_invocation_short_name) {
-    strncpy(buf, program_invocation_short_name, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: program_invocation_short_name=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "program_invocation_short_name", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    finalize(m, mbuf, MAXPATHLEN, program_invocation_short_name);
   }
 #endif
 
 
 #ifdef HAVE_DECL___ARGV
-  {
-    const char *argv0 = buf;
-    argv0 = __argv[0];
-    strncpy(buf, argv0, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: __argv=[%s]\n", ++method, __LINE__, buf);
+  extern char **__argv;
+  if (__argv) {
+    struct method m = {++method, __LINE__, "__argv", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    finalize(m, mbuf, MAXPATHLEN, __argv[0]);
   }
 #endif
 
@@ -158,13 +217,11 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, Linux, MacOSX */
   /* relative path name */
 #ifdef HAVE_DECL___PROGNAME_FULL
-  {
-    const char *argv0 = buf;
-    extern char *__progname_full;
-    argv0 = __progname_full;
-    strncpy(buf, argv0, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: __progname_full=[%s]\n", ++method, __LINE__, buf);
+  extern char *__progname_full;
+  if (__progname_full) {
+    struct method m = {++method, __LINE__, "__progname_full", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    finalize(m, mbuf, MAXPATHLEN, __progname_full);
   }
 #endif
 
@@ -172,13 +229,11 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, Linux, OpenBSD */
   /* short name */
 #ifdef HAVE_DECL___PROGNAME
-  {
-    const char *argv0 = buf;
-    extern char *__progname;
-    argv0 = __progname;
-    strncpy(buf, argv0, buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: __progname=[%s]\n", ++method, __LINE__, buf);
+  extern char *__progname;
+  if (__progname) {
+    struct method m = {++method, __LINE__, "__progname", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    finalize(m, mbuf, MAXPATHLEN, __progname);
   }
 #endif
 
@@ -186,28 +241,25 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, FreeBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
-    int mib[4];
-    size_t len = buflen;
-    memset(buf, 0, buflen);
-    mib[0] = CTL_KERN;  mib[1] = KERN_PROC;  mib[2] = KERN_PROC_PATHNAME;  mib[3] = -1;
-    len = buflen;
-    sysctl(mib, 4, buf, &len, NULL, 0);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROC)=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "sysctl(KERN_PROC)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN-1;
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+    sysctl(mib, 4, mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
-    int mib[4];
-    size_t len = buflen;
-    memset(buf, 0, buflen);
-    mib[0] = CTL_KERN;  mib[1] = KERN_PROC_ARGS;  mib[2] = -1;  mib[3] = KERN_PROC_PATHNAME;
+    struct method m = {++method, __LINE__, "sysctl(KERN_PROC_ARGS)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN-1;
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME};
     len = buflen;
     sysctl(mib, 4, buf, &len, NULL, 0);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROC_ARGS)=[%s]\n", ++method, __LINE__, buf);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -216,21 +268,19 @@ char *progpath(char *buf, size_t buflen) {
   /* relative path name */
  #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
   {
-    int mib[4];
-    size_t len;
-    size_t size;
+    struct method m = {++method, __LINE__, "sysctl(KERN_PROCARGS2)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_ARGMAX, -1, -1};
     int argmax;
+    size_t argmaxsz = sizeof(argmax);
     char *pbuf;
-    memset(buf, 0, buflen);
-    mib[0] = CTL_KERN;  mib[1] = KERN_ARGMAX; mib[2] = -1; mib[3] = -1;
-    sysctl(mib, 2, &argmax, &len, NULL, 0);
+    size_t pbufsz;
+    sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
     pbuf = calloc(argmax, sizeof(char));
     mib[0] = CTL_KERN;  mib[1] = KERN_PROCARGS2;  mib[2] = getpid();  mib[3] = -1;
-    size = (size_t)argmax; // must be full size or sysctl returns nothing
-    sysctl(mib, 3, pbuf, &size, NULL, 0);
-    strncpy(buf, (pbuf+sizeof(int)), buflen); // from sysctl, exec_path comes after argc
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROCARGS2)=[%s]\n", ++method, __LINE__, buf);
+    pbufsz = (size_t)argmax; // must be full size or sysctl returns nothing
+    sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* from sysctl, exec_path comes after argc */
   }
 #endif
 
@@ -239,14 +289,12 @@ char *progpath(char *buf, size_t buflen) {
   /* short name */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
   {
-    int mib[4];
-    size_t len = buflen;
-    memset(buf, 0, buflen);
-    mib[0] = CTL_KERN;  mib[1] = KERN_PROCNAME;  mib[2] = -1 ;  mib[3] = -1;
-    len = buflen;
-    sysctl(mib, 2, buf, &len, NULL, 0);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROCNAME)=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "sysctl(KERN_PROCNAME)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROCNAME, -1, -1};
+    size_t len = MAXPATHLEN-1;
+    sysctl(mib, 2, mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -255,16 +303,15 @@ char *progpath(char *buf, size_t buflen) {
   /* relative path name */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
   {
-    int mib[4];
+    struct method m = {++method, __LINE__, "sysctl(KERN_PROCNAME)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
     char **retargs;
-    size_t len = buflen;
-    mib[0] = CTL_KERN;  mib[1] = KERN_PROC_ARGS;  mib[2] = getpid();  mib[3] = KERN_PROC_ARGV;
+    size_t len = MAXPATHLEN-1;
     sysctl(mib, 4, NULL, &len, NULL, 0);
-    retargs = malloc(sizeof(char *) * len);
+    retargs = calloc(len, sizeof(char *));
     sysctl(mib, 4, retargs, &len, NULL, 0);
-    strncpy(buf, retargs[0], buflen-1);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctl(KERN_PROC_ARGV)=[%s]\n", ++method, __LINE__, buf);
+    finalize(m, mbuf, MAXPATHLEN, regargs[0]);
     free(retargs);
   }
 #endif
@@ -274,12 +321,11 @@ char *progpath(char *buf, size_t buflen) {
   /* short name */
 #if defined(HAVE_SYSCTLBYNAME)
   {
-    size_t len = buflen;
-    memset(buf, 0, buflen);
-    len = buflen;
-    sysctlbyname("kern.procname", buf, &len, NULL, 0);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: sysctlbyname(kern.procname)=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "sysctlbyname(kern.procname)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN-1;
+    sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -287,21 +333,21 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, MacOSX */
 #ifdef HAVE__NSGETEXECUTABLEPATH
   {
-    uint32_t ulen = buflen;
-    memset(buf, 0, buflen);
-    _NSGetExecutablePath(buf, &ulen);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: _NSGetExecutablePath=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "_NSGetExecutablePath", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    uint32_t ulen = MAXPATHLEN-1;
+    _NSGetExecutablePath(mbuf, &ulen);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #ifdef HAVE_FIND_PATH
   {
-    memset(buf, 0, buflen);
-    find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, buf, buflen);
-    if (debug)
-      printf("Method %0.2d, line %0.4d: find_path=[%s]\n", ++method, __LINE__, buf);
+    struct method m = {++method, __LINE__, "find_path", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, mbuf, MAXPATHLEN);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -317,64 +363,54 @@ char *progpath(char *buf, size_t buflen) {
 #ifdef HAVE_READLINK
   /* verified, Linux */
   {
-    memset(buf, 0, buflen);
-    readlink("/proc/self/exe", buf, buflen);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(/proc/self/exe)=[%s]\n", ++method, __LINE__, buf);
-    }
+    struct method m = {++method, __LINE__, "readlink(/proc/self/exe)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/self/exe", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #ifdef HAVE_READLINK
   {
-    memset(buf, 0, buflen);
-    readlink("/proc/curproc/file", buf, buflen);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(/proc/curproc/file)=[%s]\n", ++method, __LINE__, buf);
-    }
+    struct method m = {++method, __LINE__, "readlink(/proc/curproc/file)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/curproc/file", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #ifdef HAVE_READLINK
   {
-    memset(buf, 0, buflen);
-    readlink("/proc/pinfo", buf, buflen);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(/proc/pinfo)=[%s]\n", ++method, __LINE__, buf);
-    }
+    struct method m = {++method, __LINE__, "readlink(/proc/pinfo)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #ifdef HAVE_READLINK
   {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID)", debug};
+    char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
-    memset(buf, 0, buflen);
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d", getpid());
-    readlink(pbuf, buf, buflen);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(%s)=[%s]\n", ++method, __LINE__, pbuf, buf);
-    }
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
 
 #ifdef HAVE_READLINK
   {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID/cmdline)", debug};
+    char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
-    memset(buf, 0, buflen);
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
-    readlink(pbuf, buf, buflen-1);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(%s)=[%s]\n", ++method, __LINE__, pbuf, buf);
-    }
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
   }
 #endif
 
@@ -383,22 +419,18 @@ char *progpath(char *buf, size_t buflen) {
   /* relative path on AIX */
 #if defined(HAVE_READLINK) && defined(HAVE_SYS_PROCFS_H)
   {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID/psinfo)", debug};
+    char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
-    const char *argv0 = buf;
+    const char *argv0;
     struct psinfo p;
     int fd;
-    memset(buf, 0, buflen);
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/psinfo", getpid());
     fd = open(pbuf, O_RDONLY);
     read(fd, &p, sizeof(p));
     close(fd);
     argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
-    if (argv0)
-      memcpy(buf, argv0, strlen(argv0)+1);
-    if (buf[0]) {
-      if (debug)
-        printf("Method %0.2d, line %0.4d: readlink(%s)=[%s]\n", ++method, __LINE__, pbuf, buf);
-    }
+    finalize(m, mbuf, MAXPATHLEN, argv0);
   }
 #endif
 
@@ -407,12 +439,11 @@ char *progpath(char *buf, size_t buflen) {
   /* relative path on OBSD */
 #ifdef HAVE_DLADDR
   {
+    struct method m = {++method, __LINE__, "dladdr(main)", debug};
+    char mbuf[MAXPATHLEN] = {0};
     Dl_info i;
     dladdr(&main, &i);
-    memset(buf, 0, buflen);
-    strncpy(buf, i.dli_fname, buflen-1);
-    if (debug)
-      printf("Method %d: dladdr(main)=[%s]\n", ++method, __LINE__, buf);
+    finalize(m, mbuf, MAXPATHLEN, i.dli_fname);
   }
 #endif
 
@@ -421,6 +452,8 @@ char *progpath(char *buf, size_t buflen) {
   /* short name */
 #ifdef HAVE_GETPROCS
   {
+    struct method m = {++method, __LINE__, "getprocs", debug};
+    char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = buf;
     struct procsinfo pinfo[16];
     int numproc;
@@ -431,9 +464,8 @@ char *progpath(char *buf, size_t buflen) {
                 continue;
         if (getpid() == (pid_t)pinfo[i].pi_pid) {
           argv0 = pinfo[i].pi_comm;
-          strncpy(buf, argv0, buflen-1);
-          if (debug)
-            printf("Method %0.2d, line %0.4d: getprocs=[%s]\n", ++method, __LINE__, buf);
+          finalize(m, mbuf, MAXPATHLEN, argv0);
+          break;
         }
       }
     }
@@ -445,6 +477,8 @@ char *progpath(char *buf, size_t buflen) {
   /* short name */
 #ifdef HAVE_GETPROCS64
   {
+    struct method m = {++method, __LINE__, "getprocs64", debug};
+    char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = buf;
     struct procentry64 *pentry;
     int numproc;
@@ -453,19 +487,19 @@ char *progpath(char *buf, size_t buflen) {
 
     // get up to 1M procs, same limit as IBM ps command
     int proccnt = getprocs64(NULL, 0, NULL, 0, &proc1, 1000000);
-    pentry = malloc(sizeof(struct procentry64) * proccnt);
+    pentry = calloc(proccnt, sizeof(struct procentry64));
     while ((numproc = getprocs64(pentry, sizeof(struct procentry64), NULL, 0, &index, proccnt)) > 0) {
       for (int i = 0; i < numproc; i++) {
         if (pentry[i].pi_state == SZOMB)
                 continue;
-        if (getpid() == pentry[i].pi_pid) {
+        if (getpid() == (int)pentry[i].pi_pid) {
           argv0 = pentry[i].pi_comm;
-          strncpy(buf, argv0, buflen-1);
-          if (debug)
-            printf("Method %0.2d, line %0.4d: getprocs64=[%s]\n", ++method, __LINE__, buf);
+          finalize(m, mbuf, MAXPATHLEN, argv0);
+          break;
         }
       }
     }
+    free(pentry);
   }
 #endif
 
