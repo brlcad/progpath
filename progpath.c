@@ -97,7 +97,7 @@ enum {
  */
 static void print_method(struct method m, const char *result) {
   if (m.debug >= PP_PRINT)
-    printf("Method %0.2d, line %0.4d: %s=[%s]\n", m.id, m.line, m.label, result);
+    printf("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
 
 
@@ -312,7 +312,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED, relative: Linux */
+  /* verified, relative: Linux */
   /* verified, short: MacOSX */
 #ifdef HAVE_DECL___PROGNAME_FULL
   extern char *__progname_full;
@@ -326,8 +326,8 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED, short: Linux, OpenBSD */
-  /* verified, short: FreeBSD */
+  /* UNVERIFIED, short: OpenBSD */
+  /* verified, short: Linux, FreeBSD */
 #ifdef HAVE_DECL___PROGNAME
   extern char *__progname;
   if (__progname) {
@@ -340,7 +340,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: Linux */
+  /* verified, relative: Linux */
 #ifdef HAVE_GETAUXVAL
   {
     struct method m = {++method, __LINE__, "getauxval", debug};
@@ -481,7 +481,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: Linux */
+  /* verified, full: Linux */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/self/exe)", debug};
@@ -495,7 +495,7 @@ char *progpath(char *buf, size_t buflen) {
 
 
   /* UNVERIFIED: QNX */
-#ifdef HAVE_READLINK
+#ifdef HAVE_READ
   {
     struct method m = {++method, __LINE__, "readlink(/proc/self/exefile)", debug};
     char mbuf[MAXPATHLEN] = {0};
@@ -603,6 +603,24 @@ char *progpath(char *buf, size_t buflen) {
     char pbuf[MAXPATHLEN] = {0};
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* verified, relative: Linux */
+#ifdef HAVE_READ
+  {
+    struct method m = {++method, __LINE__, "read(/proc/$PID/cmdline)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    int fd;
+    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
+    fd = open(pbuf, O_RDONLY);
+    read(fd, mbuf, MAXPATHLEN-1);
+    close(fd);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
