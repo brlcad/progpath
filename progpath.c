@@ -510,6 +510,19 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: NetBSD */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/curproc/exe)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/curproc/exe", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
   /* verified, full: FreeBSD with /proc */
 #ifdef HAVE_READLINK
   {
