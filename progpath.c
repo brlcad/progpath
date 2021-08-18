@@ -46,6 +46,9 @@
 #ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
 #endif
@@ -54,7 +57,10 @@ extern const char *getprogname(void);
 extern const char *getexecname(void);
 extern int getpid(void);
 extern void proc_pidpath(int, char *, size_t);
-extern int readlink(const char *, char *, size_t); /* or ssize_t return */
+
+#ifndef HAVE_UNISTD_H
+//extern int readlink(const char *, char *, size_t); /* or ssize_t return */
+#endif
 
 
 #ifndef MAXPATHLEN
@@ -458,6 +464,7 @@ char *progpath(char *buf, size_t buflen) {
 
 
   /* UNVERIFIED: OpenBSD */
+  /* verified, full: FreeBSD with /proc */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/curproc/file)", debug};
@@ -476,6 +483,21 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = {++method, __LINE__, "readlink(/proc/pinfo)", debug};
     char mbuf[MAXPATHLEN] = {0};
     readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* verified, full: FreeBSD with /proc */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID/file)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/file", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
@@ -534,7 +556,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: BSD, IRIX */
+  /* UNVERIFIED: BSD, IRIX, Solaris */
 #if defined(HAVE_STRUCT_PRPSINFO) && defined(HAVE_DECL_PIOCPSINFO)
   {
     struct method m = {++method, __LINE__, "ioctl(/proc/$PID,prpsinfo)", debug};
