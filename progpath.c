@@ -787,7 +787,9 @@ int main(int ac, char *av[]) {
     return 0;
   }
 
-  fprintf(stderr, "ERROR: failed to get the program's path\n");
+  fprintf(stderr,
+          "ERROR: failed to get the program's path\n"
+          "       (set PROGPATH_DEBUG=3 to debug)\n");
   return 1;
 }
 
