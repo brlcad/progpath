@@ -13,6 +13,9 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef HAVE_SYS_AUXV_H
+#  include <sys/auxv.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -323,6 +326,19 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Linux */
+#ifdef HAVE_GETAUXVAL
+  {
+    struct method m = {++method, __LINE__, "getauxval", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = (char *)getauxval(AT_EXECFN);
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
   /* verified, full: FreeBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
@@ -338,6 +354,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: NetBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     struct method m = {++method, __LINE__, "sysctl(KERN_PROC_ARGS)", debug};
