@@ -215,7 +215,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: Sun */
+  /* UNVERIFIED: Solaris */
 #ifdef HAVE_GETEXECNAME
   {
     struct method m = {++method, __LINE__, "getexecname", debug};
@@ -467,12 +467,28 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED, Linux */
+  /* UNVERIFIED: Linux */
 #ifdef HAVE_READLINK
   {
     struct method m = {++method, __LINE__, "readlink(/proc/self/exe)", debug};
     char mbuf[MAXPATHLEN] = {0};
     readlink("/proc/self/exe", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: QNX */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/self/exefile)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    int fd;
+    fd = open("/proc/self/exefile", O_RDONLY);
+    read(fd, mbuf, MAXPATHLEN-1);
+    close(fd);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
@@ -494,19 +510,6 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: IRIX */
-#ifdef HAVE_READLINK
-  {
-    struct method m = {++method, __LINE__, "readlink(/proc/pinfo)", debug};
-    char mbuf[MAXPATHLEN] = {0};
-    readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, buf, buflen, mbuf))
-      return buf;
-  }
-#endif
-
-
   /* verified, full: FreeBSD with /proc */
 #ifdef HAVE_READLINK
   {
@@ -514,36 +517,6 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/file", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, buf, buflen, mbuf))
-      return buf;
-  }
-#endif
-
-
-  /* UNVERIFIED: OSF */
-#ifdef HAVE_READLINK
-  {
-    struct method m = {++method, __LINE__, "readlink(/proc/$PID)", debug};
-    char mbuf[MAXPATHLEN] = {0};
-    char pbuf[MAXPATHLEN] = {0};
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, buf, buflen, mbuf))
-      return buf;
-  }
-#endif
-
-
-  /* UNVERIFIED: Solaris */
-#ifdef HAVE_READLINK
-  {
-    struct method m = {++method, __LINE__, "readlink(/proc/$PID/cmdline)", debug};
-    char mbuf[MAXPATHLEN] = {0};
-    char pbuf[MAXPATHLEN] = {0};
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
@@ -589,6 +562,62 @@ char *progpath(char *buf, size_t buflen) {
     argv0 = p.pr_fname;
     printf("av0 = %s\n",argv0);
     finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: Solaris */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID/cmdline)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: Solaris */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/self/path/a.out)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: IRIX */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/pinfo)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: OSF */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
       return buf;
   }
