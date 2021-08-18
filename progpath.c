@@ -669,6 +669,20 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+
+#if 0
+  /* Unreliable */
+  /* verfified, relative: FreeBSD bash */
+  {
+    struct method m = {++method, __LINE__, "getenv(\"_\")", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = getenv("_");
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
   return buf;
 }
 
