@@ -246,6 +246,20 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
+  /* UNVERIFIED: Windows */
+#ifdef HAVE__GET_PGMPTR
+  {
+    struct method m = {++method, __LINE__, "_get_pgmptr", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = NULL;
+    _get_pgmptr(&argv0);
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
   /* verified, full: MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
@@ -588,6 +602,21 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+
+  /* UNVERIFIED: Solaris */
+#ifdef HAVE_READLINK
+  {
+    struct method m = {++method, __LINE__, "readlink(/proc/$PID/path/a.out)", debug};
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/path/a.out", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN-1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, buf, buflen, mbuf))
