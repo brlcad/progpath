@@ -36,36 +36,40 @@ char icwd[MAXPATHLEN] = {0};
 
 
 void progpath_init(void) {
-  char *pwd;
 
   progpath_icwd = icwd;
   if (progpath_icwd[0] != '\0')
     return;
 
-#if 0
+
 #ifdef HAVE_GETCWD
-  getcwd(icwd, MAXPATHLEN);
-  if (progpath_icwd[0])
-    return;
-#endif
+  {
+    getcwd(icwd, MAXPATHLEN);
+    if (progpath_icwd[0])
+      return;
+  }
 #endif
 
 
 #ifdef HAVE_REALPATH
-  realpath(".", icwd);
-  if (progpath_icwd[0])
-    return;
+  {
+    realpath(".", icwd);
+    if (progpath_icwd[0])
+      return;
+  }
 #endif
 
 
- pwd = getenv("PWD");
-printf("here: [%s]\n", pwd);
-  if (pwd)
-    strncpy(icwd, pwd, MAXPATHLEN-1);
-printf("here: [%s]\n", progpath_icwd);
-  if (progpath_icwd[0])
-    return;
-  
+  {
+    char *pwd;
+    pwd = getenv("PWD");
+    if (pwd)
+      strncpy(icwd, pwd, MAXPATHLEN-1);
+    if (progpath_icwd[0])
+      return;
+  }
+
+  printf("ERROR: Unable to determine initial working directory\n");
   assert(progpath_icwd && progpath_icwd[0]);
 }
 
