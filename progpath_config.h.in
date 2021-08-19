@@ -13,6 +13,7 @@
 #cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
 #cmakedefine HAVE_WINDOWS_H @HAVE_WINDOWS_H@
 
+#cmakedefine HAVE_GETCWD @HAVE_GETCWD@
 #cmakedefine HAVE_DLADDR @HAVE_DLADDR@
 #cmakedefine HAVE_DLSYM @HAVE_DLSYM@
 #cmakedefine HAVE_FIND_PATH @HAVE_FIND_PATH@
