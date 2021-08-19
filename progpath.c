@@ -794,6 +794,9 @@ char *progpath(char *buf, size_t buflen) {
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h> /* for chdir */
+#endif
 
 #ifndef MAXPATHLEN
 #  define MAXPATHLEN 4096
@@ -808,6 +811,9 @@ int main(int ac, char *av[]) {
     return 1;
   }
 
+  /* FIXME: relative methods resolve wrong if we move around */
+  /*  chdir("../.."); */
+  
   progpath(buf, MAXPATHLEN);
   if (buf[0]) {
     printf("%s\n", buf);
