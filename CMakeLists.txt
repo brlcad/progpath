@@ -16,8 +16,8 @@ configure_file(
   )
 include_directories("${PROJECT_BINARY_DIR}")
 
-add_library(progpath-static STATIC progpath.c)
-add_library(progpath SHARED progpath.c)
+add_library(progpath-static STATIC progpath.c;init.cpp)
+add_library(progpath SHARED progpath.c;init.cpp)
 
 add_executable(progpath-bin progpath.h;progpath.c)
 set_target_properties(progpath-bin PROPERTIES OUTPUT_NAME progpath)

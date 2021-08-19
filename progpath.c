@@ -1,6 +1,6 @@
 
-#include "progpath_config.h"
-#include "progpath.h"
+#include "./progpath_config.h"
+#include "./progpath.h"
 
 #ifndef BUILD_BINARY
 
@@ -69,6 +69,8 @@ extern void proc_pidpath(int, char *, size_t);
 #    define MAXPATHLEN 4096
 #  endif
 #endif
+
+const char *progpath_icwd = NULL;
 
 
 /* stateful structure used for debugging */
@@ -812,7 +814,10 @@ int main(int ac, char *av[]) {
   }
 
   /* FIXME: relative methods resolve wrong if we move around */
-  /*  chdir("../.."); */
+  chdir("../../../..");
+  
+  extern const char *progpath_icwd;
+  printf("initial dir is [%s]\n", progpath_icwd);
   
   progpath(buf, MAXPATHLEN);
   if (buf[0]) {
