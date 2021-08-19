@@ -563,7 +563,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* (RECHECK)verified, relative: AIX */
+  /* verified, relative: AIX */
 #ifdef HAVE_STRUCT_PSINFO
   {
     char mbuf[MAXPATHLEN] = {0};
