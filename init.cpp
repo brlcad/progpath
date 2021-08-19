@@ -32,7 +32,7 @@
 
 /* need to store/access the initial path, but not as API */
 extern const char *progpath_icwd;
-char icwd[MAXPATHLEN] = {0};
+static char icwd[MAXPATHLEN] = {0};
 
 
 void progpath_init(void) {
@@ -51,9 +51,27 @@ void progpath_init(void) {
 #endif
 
 
+#ifdef HAVE__GETCWD
+  {
+    _getcwd(icwd, MAXPATHLEN);
+    if (progpath_icwd[0])
+      return;
+  }
+#endif
+
+
 #ifdef HAVE_REALPATH
   {
     realpath(".", icwd);
+    if (progpath_icwd[0])
+      return;
+  }
+#endif
+
+
+#ifdef HAVE_GETCURRENTDIRECTORY
+  {
+    GetCurrentDirectory(MAXPATHLEN, icwd);
     if (progpath_icwd[0])
       return;
   }
@@ -77,9 +95,7 @@ void progpath_init(void) {
 struct progpath_initializer {
   /* constructor */
   progpath_initializer() {
-    char path[MAXPATHLEN] = {0};
     progpath_init();
-    progpath(path, (size_t)MAXPATHLEN);
   }
   /* destructor */
   ~progpath_initializer() {
