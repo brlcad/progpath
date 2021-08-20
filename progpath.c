@@ -745,12 +745,14 @@ char *progpath(char *buf, size_t buflen) {
     int fd;
     struct method m = METHOD("readlink(/proc/self/exefile)");
     fd = open("/proc/self/exefile", O_RDONLY);
-    read(fd, mbuf, MAXPATHLEN-1);
-    close(fd);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+    if (fd >= 0) {
+      read(fd, mbuf, MAXPATHLEN-1);
+      close(fd);
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
@@ -815,13 +817,15 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("read(/proc/$PID/psinfo)");
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/psinfo", getpid());
     fd = open(pbuf, O_RDONLY);
-    read(fd, &p, sizeof(p));
-    close(fd);
-    argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
-    finalize(m, mbuf, MAXPATHLEN, argv0);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+    if (fd >= 0) {
+      read(fd, &p, sizeof(p));
+      close(fd);
+      argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
+      finalize(m, mbuf, MAXPATHLEN, argv0);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
@@ -838,13 +842,15 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("ioctl(/proc/$PID,prpsinfo)");
     snprintf(pbuf, sizeof(pbuf), "/proc/%d", getpid());
     fd = open(pbuf, O_RDONLY);
-    ioctl(fd, PIOCPSINFO, &p);
-    close(fd);
-    argv0 = p.pr_fname;
-    finalize(m, mbuf, MAXPATHLEN, argv0);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+    if (fd >= 0) {
+      ioctl(fd, PIOCPSINFO, &p);
+      close(fd);
+      argv0 = p.pr_fname;
+      finalize(m, mbuf, MAXPATHLEN, argv0);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
@@ -876,12 +882,14 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("read(/proc/$PID/cmdline)");
     snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
     fd = open(pbuf, O_RDONLY);
-    read(fd, mbuf, MAXPATHLEN-1);
-    close(fd);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+    if (fd >= 0) {
+      read(fd, mbuf, MAXPATHLEN-1);
+      close(fd);
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
