@@ -52,6 +52,7 @@
 #endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
+#  define chdir _chdir
 #endif
 
 /* helper to simplify initialization */
@@ -265,7 +266,7 @@ static void chdir_if_diff(const char *wd) {
   char cwd[MAXPATHLEN] = {0};
   int ret;
 
-  if (!wd)
+  if (!wd || wd[0] == '\0')
     return;
 
   progcwd(cwd, MAXPATHLEN);
@@ -275,6 +276,7 @@ static void chdir_if_diff(const char *wd) {
 
   ret = chdir(wd);
   if (ret != 0) {
+    printf("WARNING: chdir(%s) failed\n", wd);
     perror("chdir");
   }
 }
