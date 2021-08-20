@@ -86,7 +86,6 @@
 
 extern const char *getprogname(void);
 extern const char *getexecname(void);
-extern int getpid(void);
 extern void proc_pidpath(int, char *, size_t);
 
 
@@ -396,12 +395,12 @@ char *progpath(char *buf, size_t buflen) {
 
   chdir_if_diff(ipwd);
 
-  /* verified, short: MacOSX, OpenBSD */
+  /* verified, short: MacOSX, OpenBSD, Haiku */
 #ifdef HAVE_GETPROGNAME
   {
-    struct method m = METHOD("getprogname");
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getprogname(); /* not malloc'd memory, may return NULL */
+    struct method m = METHOD("getprogname");
     finalize(m, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -414,9 +413,9 @@ char *progpath(char *buf, size_t buflen) {
   /* UNVERIFIED: Solaris */
 #ifdef HAVE_GETEXECNAME
   {
-    struct method m = METHOD("getexecname");
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getexecname();
+    struct method m = METHOD("getexecname");
     finalize(m, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -429,10 +428,10 @@ char *progpath(char *buf, size_t buflen) {
   /* UNVERIFIED: Windows */
 #ifdef HAVE_GETMODULEFILENAME
   {
-    struct method m = METHOD("GetModuleFileName");
     char mbuf[MAXPATHLEN] = {0};
     TCHAR exeFileName[MAXPATHLEN] = {0};
     GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
+    struct method m = METHOD("GetModuleFileName");
     if (sizeof(TCHAR) == sizeof(char))
 	    strncpy(mbuf, exeFileName, MAXPATHLEN-1);
     else
@@ -449,9 +448,9 @@ char *progpath(char *buf, size_t buflen) {
   /* UNVERIFIED: Windows */
 #ifdef HAVE__GET_PGMPTR
   {
-    struct method m = METHOD("_get_pgmptr");
     char mbuf[MAXPATHLEN] = {0};
     char *argv0 = NULL;
+    struct method m = METHOD("_get_pgmptr");
     _get_pgmptr(&argv0);
     finalize(m, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
@@ -465,8 +464,8 @@ char *progpath(char *buf, size_t buflen) {
   /* verified, full: MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
-    struct method m = METHOD("proc_pidpath");
     char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("proc_pidpath");
     (void)proc_pidpath(getpid(), mbuf, buflen);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
@@ -547,7 +546,7 @@ char *progpath(char *buf, size_t buflen) {
 
 
   /* UNVERIFIED, short: OpenBSD */
-  /* verified, short: Linux, FreeBSD */
+  /* verified, short: Linux, FreeBSD, Haiku */
 #ifdef HAVE_DECL___PROGNAME
   {
     extern char *__progname;
@@ -708,7 +707,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* UNVERIFIED: Haiku */
+  /* verified: Haiku */
 #ifdef HAVE_FIND_PATH
   {
     char mbuf[MAXPATHLEN] = {0};
@@ -959,7 +958,7 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
 
-  /* verified, full: MacOSX */
+  /* verified, full: MacOSX, Haiku */
   /* verified, relative: OpenBSD */
 #ifdef HAVE_DLADDR
   {
