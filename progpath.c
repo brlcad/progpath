@@ -1034,7 +1034,7 @@ char *progpath(char *buf, size_t buflen) {
 
 #if 0
   /* Unreliable */
-  /* verfified, relative: FreeBSD bash */
+  /* verified, relative: FreeBSD bash */
   {
     char mbuf[MAXPATHLEN] = {0};
     char *argv0 = getenv("_");
