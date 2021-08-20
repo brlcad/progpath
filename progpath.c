@@ -114,7 +114,7 @@ struct method {
 enum {
   PP_DEFAULT = 0,     /* default: no debugging */
   PP_PRINT = 1<<0,    /* print debugging */
-  PP_CONTINUE = 1<<1, /* don't stop on first method */
+  PP_CONTINUE = 1<<1  /* try all methods */
 };
 
 
