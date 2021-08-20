@@ -2,8 +2,6 @@
 #include "./progpath_config.h"
 #include "./progpath.h"
 
-#ifndef BUILD_BINARY
-
 /* use any method at our disposal */
 #define _GNU_SOURCE 1
 
@@ -1030,51 +1028,3 @@ char *progpath(char *buf, size_t buflen) {
   return NULL;
 }
 
-
-#else
-/* build a simple main that executes the API call */
-
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
-#  include <sys/param.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h> /* for chdir */
-#endif
-
-#ifndef MAXPATHLEN
-#  define MAXPATHLEN 4096
-#endif
-
-
-int main(int ac, char *av[]) {
-  char buf[MAXPATHLEN] = {0};
-
-  if (ac > 1) {
-    printf("Usage: %s\n", av[0]);
-    return 1;
-  }
-
-  chdir("../../../..");
-
-  progpath(buf, MAXPATHLEN);
-  if (buf[0]) {
-    printf("%s\n", buf);
-    return 0;
-  }
-
-  progipwd(buf, MAXPATHLEN);
-  if (buf[0])
-    printf("Initial working directory is %s\n", buf);
-
-  fprintf(stderr,
-          "ERROR: failed to get the program's path\n"
-          "       (set PROGPATH_DEBUG=3 to debug)\n");
-  return 1;
-}
-
-#endif
