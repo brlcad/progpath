@@ -25,18 +25,7 @@ int main(int ac, char *av[]) {
   /* more challenging */
   chdir("../../../..");
 
-  /* allocate dynamically */
-  ipwd = progipwd(NULL, 0);
-  if (!ipwd) {
-    fprintf(stderr,
-            "ERROR: failed to get initial path\n"
-            "       (set PROGPATH_DEBUG=3 to debug)\n");
-    return 1;
-  }
-  fprintf(stderr, "Initial directory is %s\n", ipwd);
-  free(ipwd);
-
-  /* or pass a buffer */
+  /* pass a buffer */
   progpath(buf, sizeof(buf));
   if (!buf[0]) {
     fprintf(stderr,
@@ -44,8 +33,19 @@ int main(int ac, char *av[]) {
             "       (set PROGPATH_DEBUG=3 to debug)\n");
     return 2;
   }
+  printf(" Program executable is [ %s ]\n", buf);
 
-  printf("%s\n", buf);
+  /* or allocate dynamically */
+  ipwd = progipwd(NULL, 0);
+  if (!ipwd) {
+    fprintf(stderr,
+            "ERROR: failed to get initial path\n"
+            "       (set PROGPATH_DEBUG=3 to debug)\n");
+    return 1;
+  }
+  fprintf(stderr, "Initial working dir is [ %s ]\n", ipwd);
+  free(ipwd);
+
   return 0;
 }
 
