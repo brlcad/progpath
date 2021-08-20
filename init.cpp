@@ -30,65 +30,14 @@
 #endif
 
 
-/* need to store/access the initial path, but not as API */
-extern const char *progpath_icwd;
-static char icwd[MAXPATHLEN] = {0};
+extern char progpath_ipwd[];
 
 
 void progpath_init(void) {
-
-  progpath_icwd = icwd;
-  if (progpath_icwd[0] != '\0')
+  if (progpath_ipwd[0] != '\0')
     return;
 
-
-#ifdef HAVE_GETCWD
-  {
-    getcwd(icwd, MAXPATHLEN);
-    if (progpath_icwd[0])
-      return;
-  }
-#endif
-
-
-#ifdef HAVE__GETCWD
-  {
-    _getcwd(icwd, MAXPATHLEN);
-    if (progpath_icwd[0])
-      return;
-  }
-#endif
-
-
-#ifdef HAVE_REALPATH
-  {
-    realpath(".", icwd);
-    if (progpath_icwd[0])
-      return;
-  }
-#endif
-
-
-#ifdef HAVE_GETCURRENTDIRECTORY
-  {
-    GetCurrentDirectory(MAXPATHLEN, icwd);
-    if (progpath_icwd[0])
-      return;
-  }
-#endif
-
-
-  {
-    char *pwd;
-    pwd = getenv("PWD");
-    if (pwd)
-      strncpy(icwd, pwd, MAXPATHLEN-1);
-    if (progpath_icwd[0])
-      return;
-  }
-
-  printf("ERROR: Unable to determine initial working directory\n");
-  assert(progpath_icwd && progpath_icwd[0]);
+  progipwd(progpath_ipwd, MAXPATHLEN);
 }
 
 
