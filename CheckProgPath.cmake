@@ -32,6 +32,14 @@ include(CheckStructHasMember)
 
 function(CHECK_PROG_PATH)
 
+  set (cflags CFLAGS)
+  cmake_parse_arguments(CHECK_PP "" "" "${cflags}" ${ARGN})
+
+  # make sure application cflags are used during feature testing
+  if (CHECK_PP_CFLAGS)
+    set (CMAKE_REQUIRED_FLAGS ${CHECK_PP_CFLAGS})
+  endif (CHECK_PP_CFLAGS)
+
   find_library(BSD_LIBRARY bsd)
   if (BSD_LIBRARY)
     set(PP_LIBRARIES ${PP_LIBRARIES} ${BSD_LIBRARY})

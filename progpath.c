@@ -87,7 +87,7 @@
 extern const char *getprogname(void);
 extern const char *getexecname(void);
 extern void proc_pidpath(int, char *, size_t);
-
+extern int chdir(const char *);
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
@@ -279,6 +279,12 @@ static char *progcwd(char *buf, size_t buflen) {
   }
 #endif
 
+  /* really just to appease the compiler */
+  {
+    struct method m = METHOD("UNKNOWN");
+    if (we_done_yet(m, &buf, buflen, NULL))
+      return buf;
+  }
 
   if (buf && buf[0] != '\0')
     return buf;
@@ -1053,6 +1059,15 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
+
+  /* really just to appease the compiler */
+  {
+    struct method m = METHOD("UNKNOWN");
+    if (we_done_yet(m, &buf, buflen, NULL)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
 
   /* restore path if needed */
   chdir_if_diff(cwd);
