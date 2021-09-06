@@ -55,9 +55,13 @@ function(CHECK_PROG_PATH)
   set(PROGPATH_LIBRARIES ${PP_LIBRARIES} CACHE STRING "ProgPath libraries")
   mark_as_advanced(PROGPATH_LIBRARIES)
 
+  # sys/sysctl.h requires special attention because several platforms
+  # don't present it usably out of the box without other types and
+  # headers.
   check_c_source_compiles("typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
-  #check_include_file("sys/sysctl.h" HAVE_SYS_SYSCTL_H)
+  # check_include_file("sys/sysctl.h" HAVE_SYS_SYSCTL_H)
 
+  # headers with potentially relevant API
   check_include_file("FindDirectory.h" HAVE_FINDDIRECTORY_H)
   check_include_file("dlfcn.h" HAVE_DLFCN_H)
   check_include_file("fcntl.h" HAVE_FCNTL_H)
@@ -72,11 +76,21 @@ function(CHECK_PROG_PATH)
   check_include_file("unistd.h" HAVE_UNISTD_H)
   check_include_file("windows.h" HAVE_WINDOWS_H)
 
+  # global variables
+  check_function_exists(__argv HAVE_DECL__ARGV)
+  check_symbol_exists(__argv stdlib.h HAVE_DECL__ARGV2)
+  check_function_exists(__progname HAVE_DECL___PROGNAME)
+  check_symbol_exists(__progname stdlib.h HAVE_DECL___PROGNAME2)
+  check_function_exists(__progname_full HAVE_DECL___PROGNAME_FULL)
+  check_symbol_exists(__progname_full stdlib.h HAVE_DECL___PROGNAME_FULL2)
+  check_function_exists(program_invocation_name HAVE_DECL_PROGRAM_INVOCATION_NAME)
+  check_symbol_exists(program_invocation_name errno.h HAVE_DECL_PROGRAM_INVOCATION_NAME2)
+  check_function_exists(program_invocation_short_name HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME)
+  check_symbol_exists(program_invocation_short_name errno.h HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME2)
+
+  # functions
   check_function_exists(GetModuleFileName HAVE_GETMODULEFILENAME)
   check_function_exists(_NSGetExecutablePath HAVE__NSGETEXECUTABLEPATH)
-  check_function_exists(__argv HAVE_DECL__ARGV)
-  check_function_exists(__progname HAVE_DECL___PROGNAME)
-  check_function_exists(__progname_full HAVE_DECL___PROGNAME_FULL)
   check_function_exists(_get_pgmptr HAVE__GET_PGMPTR)
   check_function_exists(_getcwd HAVE__GETCWD)
   check_function_exists(dladdr HAVE_DLADDR)
@@ -89,14 +103,13 @@ function(CHECK_PROG_PATH)
   check_function_exists(getprocs64 HAVE_GETPROCS64)
   check_function_exists(getprogname HAVE_GETPROGNAME)
   check_function_exists(proc_pidpath HAVE_PROC_PIDPATH)
-  check_function_exists(program_invocation_name HAVE_DECL_PROGRAM_INVOCATION_NAME)
-  check_function_exists(program_invocation_short_name HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME)
   check_function_exists(read HAVE_READ)
   check_function_exists(readlink HAVE_READLINK)
   check_function_exists(realpath HAVE_REALPATH)
   check_function_exists(sysctl HAVE_SYSCTL)
   check_function_exists(sysctlbyname HAVE_SYSCTLBYNAME)
 
+  # sysctl-style symbols
   check_symbol_exists(CTL_KERN "sys/types.h;sys/sysctl.h" HAVE_DECL_CTL_KERN)
   check_symbol_exists(KERN_PROC "sys/types.h;sys/sysctl.h" HAVE_DECL_KERN_PROC)
   check_symbol_exists(KERN_PROCARGS2 "sys/types.h;sys/sysctl.h" HAVE_DECL_KERN_PROCARGS2)
@@ -105,10 +118,8 @@ function(CHECK_PROG_PATH)
   check_symbol_exists(KERN_PROC_ARGV "sys/types.h;sys/sysctl.h" HAVE_DECL_KERN_PROC_ARGV)
   check_symbol_exists(KERN_PROC_PATHNAME "sys/types.h;sys/sysctl.h" HAVE_DECL_KERN_PROC_PATHNAME)
   check_symbol_exists(PIOCPSINFO "sys/ioctl.h" HAVE_DECL_PIOCPSINFO)
-  check_symbol_exists(__argv stdlib.h HAVE_DECL__ARGV2)
-  check_symbol_exists(__progname stdlib.h HAVE_DECL___PROGNAME2)
-  check_symbol_exists(__progname_full stdlib.h HAVE_DECL___PROGNAME_FULL2)
 
+  # procfs structures
   check_struct_has_member("struct psinfo" pr_argv sys/procfs.h HAVE_STRUCT_PSINFO)
   check_struct_has_member("struct prpsinfo" pr_fname sys/procfs.h HAVE_STRUCT_PRPSINFO)
   
