@@ -36,14 +36,15 @@ version of that is in the repo, compiled by default, so can see it in action:
 
 other efforts implement similar functionality, but where progpath differs is:
 
-1. its absolute API simplicity,
-2. number of methods it employs,
-3. simplified build integration,
-4. how easy it is to extend, and
-5. still works after app dir changes!
+1. absolute API simplicity,
+2. number of methods employed,
+3. simplified integration,
+4. ease of extension, and
+5. works after dir changes!
 
 progpath works on nearly all platform environments and includes an example
-program to test yours.  [let me know](https://github.com/brlcad/progpath/issues)
+program to check yours.  It's actively tested on BSD, Linux, Mac OS X, AIX, 
+Haiku, Windows, ... [let me know](https://github.com/brlcad/progpath/issues)
 if you find an environment that doesn't work!
 
 ---
