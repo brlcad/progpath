@@ -3,7 +3,11 @@ project(progpath)
 
 cmake_minimum_required(VERSION 3.7)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
-cmake_policy(SET CMP0075 NEW) # use CMAKE_REQUIRED_LIBRARIES during testing
+if (${CMAKE_VERSION} GREATER_EQUAL "3.12")
+  # use CMAKE_REQUIRED_LIBRARIES during testing
+  cmake_policy(SET CMP0075 NEW) 
+endif (${CMAKE_VERSION} GREATER_EQUAL "3.12")
+  
 
 option(PROGPATH_STRICT "Turn on all warnings, treat as errors")
 set(PROGPATH_CFLAGS "" CACHE STRING "Specify your own flags")
