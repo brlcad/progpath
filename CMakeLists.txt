@@ -1,7 +1,7 @@
+cmake_minimum_required(VERSION 3.7)
 
 project(progpath)
 
-cmake_minimum_required(VERSION 3.7)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 if (${CMAKE_VERSION} GREATER_EQUAL "3.12")
   # use CMAKE_REQUIRED_LIBRARIES during testing
