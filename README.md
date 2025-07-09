@@ -1,9 +1,9 @@
 # progpath
-simple C/C++ library for getting initial running program executable paths, 
-encapsulating platform-specific details for getting the path to the current
-running program executable or it's initial working directory.
+tiny C/C++ library for getting initial paths for a running application,
+encapsulating platform-specific details for getting a path to the running
+executable or its initial working dir.
 
-let's get right to it:
+example usage:
 
 ```C
     #include "progpath.h"
@@ -23,7 +23,7 @@ let's get right to it:
     }
 ```
 
-version of that is in the repo, compiled by default, so can see it in action:
+that code is included and compiled by default, so can see it in action:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
@@ -37,15 +37,14 @@ version of that is in the repo, compiled by default, so can see it in action:
 other efforts implement similar functionality, but where progpath differs is:
 
 1. absolute API simplicity,
-2. number of methods employed,
-3. simplified integration,
-4. ease of extension, and
-5. works after dir changes!
+2. simple build integration,
+3. number of methods it uses,
+4. ease adding new methods, and
+5. works after changing dirs!
 
-progpath works on nearly all platform environments and includes an example
-program to check yours.  It's actively tested on BSD, Linux, Mac OS X, AIX, 
-Haiku, Windows, ... [let me know](https://github.com/brlcad/progpath/issues)
-if you find an environment that doesn't work!
+progpath includes an example program for testing your environment, and should
+work everywhere.  [let me know](https://github.com/brlcad/progpath/issues) if
+you find an environment that doesn't work!
 
 ---
 &copy; 2021 Christopher Sean Morrison [@brlcad]
