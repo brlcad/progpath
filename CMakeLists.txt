@@ -78,3 +78,6 @@ if (HAVE_TLO)
 else (HAVE_TLO)
   set_property(TARGET progpath-bin PROPERTY LINK_FLAGS "${PP_LDFLAGS}")
 endif (HAVE_TLO)
+
+enable_testing()
+add_subdirectory(tests)
