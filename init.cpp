@@ -1,7 +1,7 @@
 /*                        I N I T . C P P
  * progpath
  *
- * Copyright (c) 2021 Christopher Sean Morrison
+ * Copyright (c) 2021-2026 Christopher Sean Morrison
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

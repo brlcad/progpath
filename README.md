@@ -1,4 +1,6 @@
 # progpath
+[![CI](https://github.com/brlcad/progpath/actions/workflows/ci.yml/badge.svg)](https://github.com/brlcad/progpath/actions/workflows/ci.yml)
+
 tiny C/C++ library for getting initial paths for a running application,
 encapsulating platform-specific details for getting a path to the running
 executable or its initial working dir.
@@ -47,5 +49,5 @@ work everywhere.  [let me know](https://github.com/brlcad/progpath/issues) if
 you find an environment that doesn't work!
 
 ---
-&copy; 2021 Christopher Sean Morrison [@brlcad]
+&copy; 2021-2026 Christopher Sean Morrison [@brlcad]
 MIT License

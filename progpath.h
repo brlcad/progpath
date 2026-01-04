@@ -1,7 +1,7 @@
 /*                      P R O G P A T H . H
  * progpath
  *
- * Copyright (c) 2021 Christopher Sean Morrison
+ * Copyright (c) 2021-2026 Christopher Sean Morrison
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -35,24 +35,36 @@ extern "C" {
 
 
 /**
- * get the absolute filesystem path to an application's binary
+ * @brief Get the absolute filesystem path to the application's binary.
  *
- * A path string will be written to the provided 'buf' buffer at most
- * 'len'-1 bytes to ensure nul-termination.  If 'buf' is NULL, memory
- * will be dynamically allocated via calloc() and caller is
- * responsible for calling free().
+ * A path string will be written to the provided 'buf' buffer. It will write
+ * at most 'len'-1 bytes to ensure null-termination.
+ *
+ * If 'buf' is NULL, memory will be dynamically allocated via calloc() and
+ * the caller is responsible for calling free().
+ *
+ * @param buf Buffer to write the path to, or NULL to allocate memory.
+ * @param len Size of the buffer in bytes.
+ * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
 extern char *progpath(char *buf, size_t len);
 
 
 /**
- * get absolute path to an application's initial working directory
+ * @brief Get the absolute path to the application's initial working directory.
  *
- * This obtains the current directory of an application on entry to
- * main().  A path string will be written to the provided 'buf' buffer
- * at most 'len'-1 bytes to ensure nul-termination.  If 'buf' is NULL,
- * memory will be dynamically allocated via calloc() and caller is
- * responsible for calling free().
+ * This obtains the current directory of the application as it was on entry to
+ * main().
+ *
+ * A path string will be written to the provided 'buf' buffer. It will write
+ * at most 'len'-1 bytes to ensure null-termination.
+ *
+ * If 'buf' is NULL, memory will be dynamically allocated via calloc() and
+ * the caller is responsible for calling free().
+ *
+ * @param buf Buffer to write the path to, or NULL to allocate memory.
+ * @param len Size of the buffer in bytes.
+ * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
 extern char *progipwd(char *buf, size_t len);
 
