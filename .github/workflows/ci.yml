@@ -33,3 +33,29 @@ jobs:
 
     - name: Build (Strict)
       run: cmake --build build_strict --config Debug
+
+    - name: Cppcheck
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+        cppcheck --enable=all --inconclusive --error-exitcode=1 . -i build -i build_strict -i .build
+
+    - name: Configure CMake (Sanitizers)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: cmake -B build_san -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"
+
+    - name: Build (Sanitizers)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      run: cmake --build build_san --config Debug
+
+    - name: Test (Sanitizers)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+      working-directory: build_san
+      run: ctest -C Debug --output-on-failure
+
+    - name: Check Formatting
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install -y clang-format
+        find . -name "*.[ch]" -o -name "*.cpp" | xargs clang-format --dry-run --Werror
