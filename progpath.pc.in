@@ -1,0 +1,10 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: progpath
+Description: Library for getting initial paths for a running application
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lprogpath
+Cflags: -I${includedir}

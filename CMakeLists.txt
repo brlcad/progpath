@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(progpath)
+project(progpath VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+include(GNUInstallDirs)
 if (${CMAKE_VERSION} GREATER_EQUAL "3.12")
   # use CMAKE_REQUIRED_LIBRARIES during testing
   cmake_policy(SET CMP0075 NEW) 
@@ -47,9 +48,17 @@ include_directories("${PROJECT_BINARY_DIR}")
 ###
 add_library(progpath-static STATIC progpath.h;progpath.c;init.cpp)
 target_compile_options(progpath-static PRIVATE ${PP_CFLAGS})
+target_include_directories(progpath-static PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
 add_library(progpath SHARED progpath.h;progpath.c;init.cpp)
 target_compile_options(progpath PRIVATE ${PP_CFLAGS})
+target_include_directories(progpath PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
 include(cmake/TargetLinkOptions.cmake OPTIONAL RESULT_VARIABLE HAVE_TLO)
 if (HAVE_TLO)
@@ -61,6 +70,49 @@ else (HAVE_TLO)
   set_property(TARGET progpath-static PROPERTY LINK_FLAGS "${PP_LDFLAGS}")
 endif (HAVE_TLO)
 
+
+###
+# Installation and Export
+###
+install(TARGETS progpath progpath-static
+    EXPORT progpathTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(FILES progpath.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT progpathTargets
+    FILE progpathTargets.cmake
+    NAMESPACE progpath::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/progpath
+)
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/progpathConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/progpathConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/progpathConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/progpath
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/progpathConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/progpathConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/progpath
+)
+
+configure_file(progpath.pc.in progpath.pc @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/progpath.pc"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
 
 ###
 # example program links libprogpath, calls progpath() and progipwd()
