@@ -61,5 +61,17 @@ int main(void) {
     failures++;
   #endif
 
+  /* Test dynamic allocation */
+  {
+    char *dyn_path = progpath(NULL, 0);
+    if (dyn_path) {
+      printf("PASS: progpath(NULL, 0) returned \"%s\"\n", dyn_path);
+      free(dyn_path);
+    } else {
+      fprintf(stderr, "FAIL: progpath(NULL, 0) returned NULL\n");
+      failures++;
+    }
+  }
+
   return failures > 0 ? 1 : 0;
 }
