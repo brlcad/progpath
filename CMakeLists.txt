@@ -46,14 +46,14 @@ include_directories("${PROJECT_BINARY_DIR}")
 ###
 # main progpath library, compiled static and dynamic
 ###
-add_library(progpath-static STATIC progpath.h;progpath.cpp;init.cpp)
+add_library(progpath-static STATIC progpath.h;progpath.cpp)
 target_compile_options(progpath-static PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath-static PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-add_library(progpath SHARED progpath.h;progpath.cpp;init.cpp)
+add_library(progpath SHARED progpath.h;progpath.cpp)
 target_compile_options(progpath PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

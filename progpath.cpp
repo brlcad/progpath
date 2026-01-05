@@ -1079,3 +1079,22 @@ char *progpath(char *buf, size_t buflen) {
   return NULL;
 }
 
+
+void progpath_init(void) {
+  if (progpath_ipwd[0] != '\0')
+    return;
+
+  progipwd(progpath_ipwd, MAXPATHLEN);
+}
+
+struct progpath_initializer {
+  /* constructor */
+  progpath_initializer() {
+    progpath_init();
+  }
+  /* destructor */
+  ~progpath_initializer() {
+  }
+};
+
+static progpath_initializer pp;
