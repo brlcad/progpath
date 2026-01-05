@@ -84,10 +84,12 @@
 #define METHOD(x) {0}; m.id = method++; m.line = __LINE__; m.label = (x); m.debug = debug;
 
 
-extern const char *getprogname(void);
-extern const char *getexecname(void);
-extern void proc_pidpath(int, char *, size_t);
-extern int chdir(const char *);
+extern "C" {
+  extern const char *getprogname(void);
+  extern const char *getexecname(void);
+  extern void proc_pidpath(int, char *, size_t);
+  extern int chdir(const char *);
+}
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
@@ -197,7 +199,7 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
 
     if (!buf || !(*buf) || !buflen) {
       buflen = MAXPATHLEN;
-      *buf = calloc(buflen, sizeof(char));
+      *buf = (char *)calloc(buflen, sizeof(char));
       assert(buf && *buf && (*buf)[0] == '\0');
     }
     strncpy(*buf, path, buflen-1);
@@ -630,7 +632,7 @@ char *progpath(char *buf, size_t buflen) {
     size_t pbufsz;
     struct method m = METHOD("sysctl(KERN_PROCARGS2)");
     sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
-    pbuf = calloc(argmax, sizeof(char));
+    pbuf = (char *)calloc(argmax, sizeof(char));
     mib[0] = CTL_KERN;  mib[1] = KERN_PROCARGS2;  mib[2] = getpid();  mib[3] = -1;
     pbufsz = (size_t)argmax; /* must be full size or sysctl returns nothing */
     sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
@@ -669,7 +671,7 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN-1;
     struct method m = METHOD("sysctl(KERN_PROCNAME)");
     sysctl(mib, 4, NULL, &len, NULL, 0);
-    retargs = calloc(len, sizeof(char *));
+    retargs = (char **)calloc(len, sizeof(char *));
     sysctl(mib, 4, retargs, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, regargs[0]);
     free(retargs);
