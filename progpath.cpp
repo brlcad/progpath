@@ -212,7 +212,7 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
 
   /* if we seem to have a full path, we're done */
   if ((path[0] == '/') ||
-      (pathlen > 2 && path[0] >= 'A' && path[0] <= 'Z' && path[1] == ':' && path[2] == '\\')) {
+      (pathlen > 2 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':' && path[2] == '\\')) {
 
     if (!buf || !(*buf) || !buflen) {
       buflen = MAXPATHLEN;
