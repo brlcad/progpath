@@ -33,6 +33,8 @@ extern "C" {
 
 #include <stddef.h>
 
+#define PROGPATH_VERSION "1.0.0"
+
 
 /**
  * @brief Get the absolute filesystem path to the application's binary.

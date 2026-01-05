@@ -48,5 +48,18 @@ int main(void) {
     }
   }
 
+  /* Test PROGPATH_VERSION */
+  #ifdef PROGPATH_VERSION
+    if (strlen(PROGPATH_VERSION) > 0) {
+        printf("PASS: PROGPATH_VERSION is set to \"%s\"\n", PROGPATH_VERSION);
+    } else {
+        fprintf(stderr, "FAIL: PROGPATH_VERSION is empty\n");
+        failures++;
+    }
+  #else
+    fprintf(stderr, "FAIL: PROGPATH_VERSION is not defined\n");
+    failures++;
+  #endif
+
   return failures > 0 ? 1 : 0;
 }
