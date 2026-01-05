@@ -24,18 +24,18 @@
  * SOFTWARE.
  */
 
-#include "./progpath_config.h"
 #include "./progpath.h"
+#include "./progpath_config.h"
 
 /* use any method at our disposal */
 #define _GNU_SOURCE 1
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_AUXV_H
 #  include <sys/auxv.h>
@@ -82,14 +82,18 @@
 #endif
 
 /* helper to simplify initialization */
-#define METHOD(x) {0}; m.id = method++; m.line = __LINE__; m.label = (x); m.debug = debug;
-
+#define METHOD(x)    \
+  {0};               \
+  m.id = method++;   \
+  m.line = __LINE__; \
+  m.label = (x);     \
+  m.debug = debug;
 
 extern "C" {
-  extern const char *getprogname(void);
-  extern const char *getexecname(void);
-  extern void proc_pidpath(int, char *, size_t);
-  extern int chdir(const char *);
+extern const char *getprogname(void);
+extern const char *getexecname(void);
+extern void proc_pidpath(int, char *, size_t);
+extern int chdir(const char *);
 }
 
 #ifndef MAXPATHLEN
@@ -100,9 +104,7 @@ extern "C" {
 #  endif
 #endif
 
-
 static char progpath_ipwd[MAXPATHLEN] = {0};
-
 
 /* stateful structure used for debugging */
 struct method {
@@ -112,14 +114,12 @@ struct method {
   int debug;
 };
 
-
 /* debug states encoded as bits */
 enum {
-  PP_DEFAULT = 0,     /* default: no debugging */
-  PP_PRINT = 1<<0,    /* print debugging */
-  PP_CONTINUE = 1<<1  /* try all methods */
+  PP_DEFAULT = 0,      /* default: no debugging */
+  PP_PRINT = 1 << 0,   /* print debugging */
+  PP_CONTINUE = 1 << 1 /* try all methods */
 };
-
 
 /* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
  * print useful debugging lines for methods that have results.
@@ -133,7 +133,7 @@ static void pp_print(const char *fmt, ...) {
   va_list args;
   if (!(pp_get_debug() & PP_PRINT))
     return;
-  
+
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
@@ -142,7 +142,6 @@ static void pp_print(const char *fmt, ...) {
 static void print_method(struct method m, const char *result) {
   pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
-
 
 /* this function expands a given path, only modifying 'buf' with the
  * full path if it appears to have succeeded.
@@ -154,7 +153,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
     return;
 
   /* work on a copy */
-  strncpy(rbuf, buf, buflen-1);
+  strncpy(rbuf, buf, buflen - 1);
 
   /* resolve links and relative paths */
   if (rbuf[0] == '/' || rbuf[0] == '.') {
@@ -175,7 +174,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
         char full_path[MAXPATHLEN];
         snprintf(full_path, sizeof(full_path), "%s/%s", dir, rbuf);
         if (access(full_path, X_OK) == 0) {
-          strncpy(rbuf, full_path, MAXPATHLEN-1);
+          strncpy(rbuf, full_path, MAXPATHLEN - 1);
           break;
         }
         dir = strtok(NULL, ":");
@@ -187,9 +186,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   /* copy full paths back to caller */
   if (rbuf[0] == '/')
     strncpy(buf, rbuf, buflen);
-
 }
-
 
 /* perform operations common to every method.  given a final output
  * buffer and an optional 'result' path, expand it to a full path,
@@ -201,7 +198,7 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
     return;
 
   if (result)
-    strncpy(buf, result, buflen-1);
+    strncpy(buf, result, buflen - 1);
 
   if (buf[0] == 0)
     return;
@@ -210,7 +207,6 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
   resolve_to_full_path(buf, MAXPATHLEN);
   print_method(m, buf);
 }
-
 
 /* cheeky function checks whather we seem to have a full 'path',
  * writing a full path to the 'buf' output buffer or dynamically
@@ -234,7 +230,7 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
       *buf = (char *)calloc(buflen, sizeof(char));
       assert(buf && *buf && (*buf)[0] == '\0');
     }
-    strncpy(*buf, path, buflen-1);
+    strncpy(*buf, path, buflen - 1);
 
     if (m.debug & PP_CONTINUE)
       return 0;
@@ -243,7 +239,6 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
 
   return 0;
 }
-
 
 /* obtain the current working directory.  not currently exposed as
  * public API, but could be convinced to make it public if enough
@@ -268,7 +263,6 @@ static char *progcwd(char *buf, size_t buflen) {
   }
 #endif
 
-
 #ifdef HAVE__GETCWD
   {
     char cwd[MAXPATHLEN] = {0};
@@ -281,7 +275,6 @@ static char *progcwd(char *buf, size_t buflen) {
   }
 #endif
 
-
 #ifdef HAVE_REALPATH
   {
     char cwd[MAXPATHLEN] = {0};
@@ -293,7 +286,6 @@ static char *progcwd(char *buf, size_t buflen) {
       return buf;
   }
 #endif
-
 
 #ifdef HAVE_GETCURRENTDIRECTORY
   {
@@ -319,7 +311,6 @@ static char *progcwd(char *buf, size_t buflen) {
   return NULL;
 }
 
-
 static void chdir_if_diff(const char *wd) {
   char cwd[MAXPATHLEN] = {0};
   int ret;
@@ -329,7 +320,7 @@ static void chdir_if_diff(const char *wd) {
 
   progcwd(cwd, MAXPATHLEN);
 
-  if (strncmp(cwd, wd, MAXPATHLEN-1) == 0)
+  if (strncmp(cwd, wd, MAXPATHLEN - 1) == 0)
     return;
 
   ret = chdir(wd);
@@ -338,7 +329,6 @@ static void chdir_if_diff(const char *wd) {
     perror("chdir");
   }
 }
-
 
 char *progipwd(char *buf, size_t buflen) {
 
@@ -353,9 +343,7 @@ char *progipwd(char *buf, size_t buflen) {
     return buf; /* always return, even PP_CONTINUE */
   }
 
-
   /* TODO: add additional deterministic ipwd methods here */
-
 
   /* getenv(PWD) method only works for the initial working directory,
    * and is not updated after changing directories.
@@ -367,13 +355,12 @@ char *progipwd(char *buf, size_t buflen) {
     struct method m = METHOD("getenv(PWD)");
     pwd = getenv("PWD");
     if (pwd) {
-      strncpy(cwd, pwd, MAXPATHLEN-1);
+      strncpy(cwd, pwd, MAXPATHLEN - 1);
       finalize(m, mbuf, MAXPATHLEN, cwd);
       if (we_done_yet(m, &buf, buflen, mbuf))
         return buf;
     }
   }
-
 
   /* first call to progipwd() should be during init, so we can use the
    * current working directory when progpath_ipwd is unset.
@@ -394,7 +381,6 @@ char *progipwd(char *buf, size_t buflen) {
     return buf;
   return NULL;
 }
-
 
 char *progpath(char *buf, size_t buflen) {
 
@@ -428,7 +414,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: Solaris */
 #ifdef HAVE_GETEXECNAME
   {
@@ -443,7 +428,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: Windows */
 #ifdef HAVE_GETMODULEFILENAME
   {
@@ -452,9 +436,9 @@ char *progpath(char *buf, size_t buflen) {
     GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
     struct method m = METHOD("GetModuleFileName");
     if (sizeof(TCHAR) == sizeof(char))
-	    strncpy(mbuf, exeFileName, MAXPATHLEN-1);
+      strncpy(mbuf, exeFileName, MAXPATHLEN - 1);
     else
-	    wcstombs(mbuf, exeFileName, wcslen(mbuf)+1);
+      wcstombs(mbuf, exeFileName, wcslen(mbuf) + 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -462,7 +446,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: Windows */
 #ifdef HAVE__GET_PGMPTR
@@ -479,7 +462,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, full: MacOSX */
 #ifdef HAVE_PROC_PIDPATH
   {
@@ -493,7 +475,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, relative: Linux */
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
@@ -511,7 +492,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, short: Linux */
 #ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
   {
@@ -528,7 +508,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: Windows */
 #ifdef HAVE_DECL___ARGV
   {
@@ -544,7 +523,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, relative: Linux */
   /* verified, short: MacOSX */
@@ -563,7 +541,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED, short: OpenBSD */
   /* verified, short: Linux, FreeBSD, Haiku */
 #ifdef HAVE_DECL___PROGNAME
@@ -581,7 +558,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, relative: Linux */
 #ifdef HAVE_GETAUXVAL
   {
@@ -596,12 +572,11 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, full: FreeBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
-    size_t len = MAXPATHLEN-1;
+    size_t len = MAXPATHLEN - 1;
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     struct method m = METHOD("sysctl(KERN_PROC)");
     sysctl(mib, 4, mbuf, &len, NULL, 0);
@@ -613,12 +588,11 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: NetBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
-    size_t len = MAXPATHLEN-1;
+    size_t len = MAXPATHLEN - 1;
     int mib[4] = {CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME};
     struct method m = METHOD("sysctl(KERN_PROC_ARGS)");
     len = buflen;
@@ -631,9 +605,8 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, relative: MacOSX */
- #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
   {
     char mbuf[MAXPATHLEN] = {0};
     int mib[4] = {CTL_KERN, KERN_ARGMAX, -1, -1};
@@ -644,7 +617,10 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("sysctl(KERN_PROCARGS2)");
     sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
     pbuf = (char *)calloc(argmax, sizeof(char));
-    mib[0] = CTL_KERN;  mib[1] = KERN_PROCARGS2;  mib[2] = getpid();  mib[3] = -1;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = getpid();
+    mib[3] = -1;
     pbufsz = (size_t)argmax; /* must be full size or sysctl returns nothing */
     sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* from sysctl, exec_path comes after argc */
@@ -655,13 +631,12 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, short: MacOSX */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
     int mib[4] = {CTL_KERN, KERN_PROCNAME, -1, -1};
-    size_t len = MAXPATHLEN-1;
+    size_t len = MAXPATHLEN - 1;
     struct method m = METHOD("sysctl(KERN_PROCNAME)");
     sysctl(mib, 2, mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
@@ -672,14 +647,13 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, relative: OpenBSD */
 #if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
   {
     char mbuf[MAXPATHLEN] = {0};
     int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
     char **retargs;
-    size_t len = MAXPATHLEN-1;
+    size_t len = MAXPATHLEN - 1;
     struct method m = METHOD("sysctl(KERN_PROCNAME)");
     sysctl(mib, 4, NULL, &len, NULL, 0);
     retargs = (char **)calloc(len, sizeof(char *));
@@ -693,12 +667,11 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, short: MacOSX */
 #if defined(HAVE_SYSCTLBYNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
-    size_t len = MAXPATHLEN-1;
+    size_t len = MAXPATHLEN - 1;
     struct method m = METHOD("sysctlbyname(kern.procname)");
     sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
@@ -709,12 +682,11 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, full: MacOSX */
 #ifdef HAVE__NSGETEXECUTABLEPATH
   {
     char mbuf[MAXPATHLEN] = {0};
-    uint32_t ulen = MAXPATHLEN-1;
+    uint32_t ulen = MAXPATHLEN - 1;
     struct method m = METHOD("_NSGetExecutablePath");
     _NSGetExecutablePath(mbuf, &ulen);
     finalize(m, mbuf, MAXPATHLEN, NULL);
@@ -724,7 +696,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified: Haiku */
 #ifdef HAVE_FIND_PATH
@@ -740,13 +711,12 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, full: Linux */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/self/exe)");
-    readlink("/proc/self/exe", mbuf, MAXPATHLEN-1);
+    readlink("/proc/self/exe", mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -754,7 +724,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: QNX */
 #ifdef HAVE_READ
@@ -764,7 +733,7 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("readlink(/proc/self/exefile)");
     fd = open("/proc/self/exefile", O_RDONLY);
     if (fd >= 0) {
-      read(fd, mbuf, MAXPATHLEN-1);
+      read(fd, mbuf, MAXPATHLEN - 1);
       close(fd);
       finalize(m, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
@@ -775,14 +744,13 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: OpenBSD */
   /* verified, full: FreeBSD with /proc */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/curproc/file)");
-    readlink("/proc/curproc/file", mbuf, MAXPATHLEN-1);
+    readlink("/proc/curproc/file", mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -790,14 +758,13 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: NetBSD */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/curproc/exe)");
-    readlink("/proc/curproc/exe", mbuf, MAXPATHLEN-1);
+    readlink("/proc/curproc/exe", mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -805,7 +772,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, full: FreeBSD with /proc */
 #ifdef HAVE_READLINK
@@ -813,8 +779,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/$PID/file)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/file", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/file", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -822,7 +788,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, relative: AIX */
 #ifdef HAVE_STRUCT_PSINFO
@@ -833,7 +798,7 @@ char *progpath(char *buf, size_t buflen) {
     struct psinfo p;
     int fd;
     struct method m = METHOD("read(/proc/$PID/psinfo)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/psinfo", getpid());
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/psinfo", getpid());
     fd = open(pbuf, O_RDONLY);
     if (fd >= 0) {
       read(fd, &p, sizeof(p));
@@ -847,7 +812,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: BSD, IRIX, Solaris */
 #if defined(HAVE_STRUCT_PRPSINFO) && defined(HAVE_DECL_PIOCPSINFO)
@@ -873,15 +837,14 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: Solaris */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/$PID/cmdline)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -890,7 +853,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, relative: Linux */
 #ifdef HAVE_READ
   {
@@ -898,10 +860,10 @@ char *progpath(char *buf, size_t buflen) {
     char pbuf[MAXPATHLEN] = {0};
     int fd;
     struct method m = METHOD("read(/proc/$PID/cmdline)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/cmdline", getpid());
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", getpid());
     fd = open(pbuf, O_RDONLY);
     if (fd >= 0) {
-      read(fd, mbuf, MAXPATHLEN-1);
+      read(fd, mbuf, MAXPATHLEN - 1);
       close(fd);
       finalize(m, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
@@ -912,15 +874,14 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* UNVERIFIED: Solaris */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/$PID/path/a.out)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d/path/a.out", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/path/a.out", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -928,14 +889,13 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: Solaris */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/self/path/a.out)");
-    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN-1);
+    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -943,14 +903,13 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: IRIX */
 #ifdef HAVE_READLINK
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/pinfo)");
-    readlink("/proc/pinfo", mbuf, MAXPATHLEN-1);
+    readlink("/proc/pinfo", mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -958,7 +917,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* UNVERIFIED: OSF */
 #ifdef HAVE_READLINK
@@ -966,8 +924,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/$PID)");
-    snprintf(pbuf, MAXPATHLEN-1, "/proc/%d", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN-1);
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -975,7 +933,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, full: MacOSX, Haiku */
   /* verified, relative: OpenBSD */
@@ -994,7 +951,6 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-
   /* verified, short: AIX */
 #ifdef HAVE_GETPROCS
   {
@@ -1007,7 +963,7 @@ char *progpath(char *buf, size_t buflen) {
     while ((numproc = getprocs(pinfo, sizeof(struct procsinfo), NULL, 0, &index, 16)) > 0) {
       for (int i = 0; i < numproc; i++) {
         if (pinfo[i].pi_state == SZOMB)
-                continue;
+          continue;
         if (getpid() == (pid_t)pinfo[i].pi_pid) {
           argv0 = pinfo[i].pi_comm;
           finalize(m, mbuf, MAXPATHLEN, argv0);
@@ -1021,7 +977,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
   /* verified, short: AIX */
 #ifdef HAVE_GETPROCS64
@@ -1041,7 +996,7 @@ char *progpath(char *buf, size_t buflen) {
     while ((numproc = getprocs64(pentry, sizeof(struct procentry64), NULL, 0, &index, proccnt)) > 0) {
       for (int i = 0; i < numproc; i++) {
         if (pentry[i].pi_state == SZOMB)
-                continue;
+          continue;
         if (getpid() == (int)pentry[i].pi_pid) {
           argv0 = pentry[i].pi_comm;
           finalize(m, mbuf, MAXPATHLEN, argv0);
@@ -1056,7 +1011,6 @@ char *progpath(char *buf, size_t buflen) {
     }
   }
 #endif
-
 
 #if 0
   /* Unreliable */
@@ -1089,7 +1043,6 @@ char *progpath(char *buf, size_t buflen) {
     return buf;
   return NULL;
 }
-
 
 void progpath_init(void) {
   if (progpath_ipwd[0] != '\0')

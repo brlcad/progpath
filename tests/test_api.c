@@ -1,7 +1,7 @@
 #include "progpath.h"
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void) {
   char buf[1024];
@@ -27,11 +27,11 @@ int main(void) {
     char small_buf[1];
     small_buf[0] = 'X';
     res = progpath(small_buf, 0);
-    /* We expect NULL or empty string if buffer is too small/invalid, 
+    /* We expect NULL or empty string if buffer is too small/invalid,
        but primarily we want to ensure no crash */
     if (res && small_buf[0] != 'X' && small_buf[0] != '\0') {
-        /* If it wrote something, it better be null terminated if size was > 0.
-           With size 0, it shouldn't write. */
+      /* If it wrote something, it better be null terminated if size was > 0.
+         With size 0, it shouldn't write. */
     }
     printf("PASS: progpath handled 0 size buffer without crash\n");
   }
@@ -48,18 +48,18 @@ int main(void) {
     }
   }
 
-  /* Test PROGPATH_VERSION */
-  #ifdef PROGPATH_VERSION
-    if (strlen(PROGPATH_VERSION) > 0) {
-        printf("PASS: PROGPATH_VERSION is set to \"%s\"\n", PROGPATH_VERSION);
-    } else {
-        fprintf(stderr, "FAIL: PROGPATH_VERSION is empty\n");
-        failures++;
-    }
-  #else
-    fprintf(stderr, "FAIL: PROGPATH_VERSION is not defined\n");
+/* Test PROGPATH_VERSION */
+#ifdef PROGPATH_VERSION
+  if (strlen(PROGPATH_VERSION) > 0) {
+    printf("PASS: PROGPATH_VERSION is set to \"%s\"\n", PROGPATH_VERSION);
+  } else {
+    fprintf(stderr, "FAIL: PROGPATH_VERSION is empty\n");
     failures++;
-  #endif
+  }
+#else
+  fprintf(stderr, "FAIL: PROGPATH_VERSION is not defined\n");
+  failures++;
+#endif
 
   /* Test dynamic allocation */
   {

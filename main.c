@@ -12,7 +12,6 @@
 #  include <unistd.h> /* for chdir */
 #endif
 
-
 int main(int ac, char *av[]) {
   char *ipwd;
   char buf[1234] = {0};
@@ -48,4 +47,3 @@ int main(int ac, char *av[]) {
 
   return 0;
 }
-

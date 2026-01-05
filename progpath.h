@@ -35,7 +35,6 @@ extern "C" {
 
 #define PROGPATH_VERSION "1.0.0"
 
-
 /**
  * @brief Get the absolute filesystem path to the application's binary.
  *
@@ -50,7 +49,6 @@ extern "C" {
  * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
 extern char *progpath(char *buf, size_t len);
-
 
 /**
  * @brief Get the absolute path to the application's initial working directory.
@@ -69,7 +67,6 @@ extern char *progpath(char *buf, size_t len);
  * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
 extern char *progipwd(char *buf, size_t len);
-
 
 #ifdef __cplusplus
 }
