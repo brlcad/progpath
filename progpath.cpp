@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #ifdef HAVE_SYS_AUXV_H
 #  include <sys/auxv.h>
@@ -123,9 +124,23 @@ enum {
 /* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
  * print useful debugging lines for methods that have results.
  */
+static int pp_get_debug(void) {
+  const char *env = getenv("PROGPATH_DEBUG");
+  return env ? atoi(env) : 0;
+}
+
+static void pp_print(const char *fmt, ...) {
+  va_list args;
+  if (!(pp_get_debug() & PP_PRINT))
+    return;
+  
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+}
+
 static void print_method(struct method m, const char *result) {
-  if (m.debug & PP_PRINT)
-    printf("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
+  pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
 
 
@@ -236,16 +251,10 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
  */
 static char *progcwd(char *buf, size_t buflen) {
 
-  /* environment variable can be set for debug printing */
-  const char *progpath_debug = getenv("PROGPATH_DEBUG");
-  int debug = 0;
+  int debug = pp_get_debug();
   int method = 0;
 
-  if (progpath_debug)
-    debug = atoi(progpath_debug);
-
-  if (debug & PP_PRINT)
-    printf("progcwd() getting the current directory\n");
+  pp_print("progcwd() getting the current directory\n");
 
 #ifdef HAVE_GETCWD
   {
@@ -325,7 +334,7 @@ static void chdir_if_diff(const char *wd) {
 
   ret = chdir(wd);
   if (ret != 0) {
-    printf("WARNING: chdir(%s) failed\n", wd);
+    pp_print("WARNING: chdir(%s) failed\n", wd);
     perror("chdir");
   }
 }
@@ -333,16 +342,11 @@ static void chdir_if_diff(const char *wd) {
 
 char *progipwd(char *buf, size_t buflen) {
 
-  const char *progpath_debug = getenv("PROGPATH_DEBUG");
-  int debug = 0;
+  int debug = pp_get_debug();
   int method = 0;
   struct method im = {0, __LINE__, "ipwd", 0};
 
-  if (progpath_debug)
-    debug = atoi(progpath_debug);
-
-  if (debug & PP_PRINT)
-    printf("=== progipwd() ===\n");
+  pp_print("=== progipwd() ===\n");
 
   if (progpath_ipwd[0]) {
     we_done_yet(im, &buf, buflen, progpath_ipwd);
@@ -378,9 +382,7 @@ char *progipwd(char *buf, size_t buflen) {
     char cwd[MAXPATHLEN] = {0};
     char pbuf[MAXPATHLEN] = {0};
 
-    if (debug & PP_PRINT) {
-      printf("progipwd() using the current directory\n");
-    }
+    pp_print("progipwd() using the current directory\n");
 
     progcwd(cwd, MAXPATHLEN);
     finalize(im, pbuf, MAXPATHLEN, cwd);
@@ -396,27 +398,19 @@ char *progipwd(char *buf, size_t buflen) {
 
 char *progpath(char *buf, size_t buflen) {
 
-  /* environment variable can be set for debug printing */
-  const char *progpath_debug = getenv("PROGPATH_DEBUG");
+  int debug = pp_get_debug();
+  int method = 0;
 
   /* we need to be where the app started before trying methods */
   char cwd[MAXPATHLEN] = {0};
   char ipwd[MAXPATHLEN] = {0};
 
-  int debug = 0;
-  int method = 0;
-
-  if (progpath_debug)
-    debug = atoi(progpath_debug);
-
-  if (debug & PP_PRINT)
-    printf("=== progpath() ===\n");
+  pp_print("=== progpath() ===\n");
 
   progcwd(cwd, MAXPATHLEN);
   progipwd(ipwd, MAXPATHLEN);
 
-  if (debug & PP_PRINT)
-    printf("cwd=%s ipwd=%s\n", cwd, ipwd);
+  pp_print("cwd=%s ipwd=%s\n", cwd, ipwd);
 
   chdir_if_diff(ipwd);
 
