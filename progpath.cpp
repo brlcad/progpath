@@ -151,6 +151,23 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 
   /* resolve via PATH */
+  if (rbuf[0] != '/' && rbuf[0] != '.') {
+    char *path_env = getenv("PATH");
+    if (path_env) {
+      char *path_dup = strdup(path_env);
+      char *dir = strtok(path_dup, ":");
+      while (dir) {
+        char full_path[MAXPATHLEN];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir, rbuf);
+        if (access(full_path, X_OK) == 0) {
+          strncpy(rbuf, full_path, MAXPATHLEN-1);
+          break;
+        }
+        dir = strtok(NULL, ":");
+      }
+      free(path_dup);
+    }
+  }
 
   /* copy full paths back to caller */
   if (rbuf[0] == '/')
