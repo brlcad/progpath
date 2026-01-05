@@ -100,7 +100,7 @@ extern "C" {
 #endif
 
 
-char progpath_ipwd[MAXPATHLEN] = {0};
+static char progpath_ipwd[MAXPATHLEN] = {0};
 
 
 /* stateful structure used for debugging */
