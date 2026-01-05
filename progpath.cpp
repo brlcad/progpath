@@ -1,4 +1,4 @@
-/*                      P R O G P A T H . C
+/*                    P R O G P A T H . C P P
  * progpath
  *
  * Copyright (c) 2021-2026 Christopher Sean Morrison
