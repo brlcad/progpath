@@ -82,12 +82,7 @@
 #endif
 
 /* helper to simplify initialization */
-#define METHOD(x)    \
-  {0};               \
-  m.id = method++;   \
-  m.line = __LINE__; \
-  m.label = (x);     \
-  m.debug = debug;
+#define METHOD(x) {method++, __LINE__, (x), debug}
 
 extern "C" {
 extern const char *getprogname(void);
