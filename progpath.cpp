@@ -945,14 +945,23 @@ char *progpath(char *buf, size_t buflen) {
 #ifdef HAVE_DLADDR
   {
     char mbuf[MAXPATHLEN] = {0};
-    Dl_info i;
-    const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
+    static const char *main_fname = NULL;
     struct method m = METHOD("dladdr(main)");
-    dladdr(mainfunc, &i);
-    finalize(m, mbuf, MAXPATHLEN, i.dli_fname);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+
+    if (!main_fname) {
+      Dl_info i;
+      const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
+      if (mainfunc && dladdr(mainfunc, &i) && i.dli_fname) {
+        main_fname = i.dli_fname;
+      }
+    }
+
+    if (main_fname) {
+      finalize(m, mbuf, MAXPATHLEN, main_fname);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
