@@ -435,16 +435,18 @@ char *progpath(char *buf, size_t buflen) {
   {
     char mbuf[MAXPATHLEN] = {0};
     TCHAR exeFileName[MAXPATHLEN] = {0};
-    GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
+    DWORD ret = GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
     struct method m = METHOD("GetModuleFileName");
-    if (sizeof(TCHAR) == sizeof(char))
-      strncpy(mbuf, exeFileName, MAXPATHLEN - 1);
-    else
-      wcstombs(mbuf, exeFileName, wcslen(mbuf) + 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
-      return buf;
+    if (ret > 0 && ret < MAXPATHLEN) {
+      if (sizeof(TCHAR) == sizeof(char))
+        strncpy(mbuf, exeFileName, MAXPATHLEN - 1);
+      else
+        wcstombs(mbuf, exeFileName, wcslen(mbuf) + 1);
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
     }
   }
 #endif
