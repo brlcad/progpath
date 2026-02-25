@@ -74,7 +74,7 @@
 #  include <FindDirectory.h>
 #endif
 #ifdef HAVE_UNISTD_H
-#  include <unistd.h>
+#  include <unistd.h> /* for access */
 #endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
@@ -357,6 +357,7 @@ char *progipwd(char *buf, size_t buflen) {
     pwd = getenv("PWD");
     if (pwd) {
       strncpy(cwd, pwd, MAXPATHLEN - 1);
+      cwd[MAXPATHLEN - 1] = '\0';
       finalize(m, mbuf, MAXPATHLEN, cwd);
       if (we_done_yet(m, &buf, buflen, mbuf))
         return buf;
