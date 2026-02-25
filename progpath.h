@@ -35,6 +35,20 @@ extern "C" {
 
 #define PROGPATH_VERSION "1.0.0"
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+#  if defined(PROGPATH_EXPORTS)
+#    define PROGPATH_EXPORT __declspec(dllexport)
+#  else
+#    define PROGPATH_EXPORT __declspec(dllimport)
+#  endif
+#else
+#  if defined(__GNUC__) && __GNUC__ >= 4
+#    define PROGPATH_EXPORT __attribute__ ((visibility ("default")))
+#  else
+#    define PROGPATH_EXPORT
+#  endif
+#endif
+
 /**
  * @brief Get the absolute filesystem path to the application's binary.
  *
@@ -48,7 +62,7 @@ extern "C" {
  * @param len Size of the buffer in bytes.
  * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
-extern char *progpath(char *buf, size_t len);
+PROGPATH_EXPORT extern char *progpath(char *buf, size_t len);
 
 /**
  * @brief Get the absolute path to the application's initial working directory.
@@ -66,7 +80,7 @@ extern char *progpath(char *buf, size_t len);
  * @param len Size of the buffer in bytes.
  * @return Pointer to the buffer containing the path (either 'buf' or allocated), or NULL on failure.
  */
-extern char *progipwd(char *buf, size_t len);
+PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 
 #ifdef __cplusplus
 }

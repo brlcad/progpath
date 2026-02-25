@@ -54,6 +54,8 @@ target_include_directories(progpath-static PUBLIC
 )
 
 add_library(progpath SHARED progpath.h;progpath.cpp)
+target_compile_definitions(progpath PRIVATE PROGPATH_EXPORTS)
+set_target_properties(progpath PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
 target_compile_options(progpath PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
