@@ -1,9 +1,11 @@
 BasedOnStyle: LLVM
+Standard: Latest
 IndentWidth: 2
-TabWidth: 2
+TabWidth: 8
 UseTab: Never
 BreakBeforeBraces: Attach
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: true
 ColumnLimit: 0
 IndentPPDirectives: AfterHash
+FixNamespaceComments: true
