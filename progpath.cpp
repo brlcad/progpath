@@ -152,6 +152,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
 
   /* work on a copy */
   strncpy(rbuf, buf, buflen - 1);
+  rbuf[MAXPATHLEN - 1] = '\0';
 
   /* resolve links and relative paths */
   if (rbuf[0] == '/' || rbuf[0] == '.') {
