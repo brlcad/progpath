@@ -118,6 +118,9 @@ enum {
 
 /* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
  * print useful debugging lines for methods that have results.
+ *
+ * This is queried recurrently on purpose without caching/memoization
+ * so run-time debugging can be dynamically toggled.
  */
 static int pp_get_debug(void) {
   const char *env = getenv("PROGPATH_DEBUG");
@@ -220,12 +223,15 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
   if ((path[0] == '/') ||
       (pathlen > 2 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':' && path[2] == '\\')) {
 
-    if (!buf || !(*buf) || !buflen) {
+    if (buf && !(*buf)) {
       buflen = MAXPATHLEN;
       *buf = (char *)calloc(buflen, sizeof(char));
       assert(buf && *buf && (*buf)[0] == '\0');
     }
-    strncpy(*buf, path, buflen - 1);
+    if (buf && *buf && buflen > 0) {
+      strncpy(*buf, path, buflen - 1);
+      (*buf)[buflen - 1] = '\0';
+    }
 
     if (m.debug & PP_CONTINUE)
       return 0;
@@ -619,6 +625,7 @@ char *progpath(char *buf, size_t buflen) {
     pbufsz = (size_t)argmax; /* must be full size or sysctl returns nothing */
     sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* from sysctl, exec_path comes after argc */
+    free(pbuf);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
       return buf;
@@ -653,7 +660,7 @@ char *progpath(char *buf, size_t buflen) {
     sysctl(mib, 4, NULL, &len, NULL, 0);
     retargs = (char **)calloc(len, sizeof(char *));
     sysctl(mib, 4, retargs, &len, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, regargs[0]);
+    finalize(m, mbuf, MAXPATHLEN, retargs[0]);
     free(retargs);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -987,7 +994,7 @@ char *progpath(char *buf, size_t buflen) {
 
     /* get up to 1M procs, same limit as IBM ps command */
     proccnt = getprocs64(NULL, 0, NULL, 0, &proc1, 1000000);
-    pentry = calloc(proccnt, sizeof(struct procentry64));
+    pentry = (struct procentry64 *)calloc(proccnt, sizeof(struct procentry64));
     while ((numproc = getprocs64(pentry, sizeof(struct procentry64), NULL, 0, &index, proccnt)) > 0) {
       for (int i = 0; i < numproc; i++) {
         if (pentry[i].pi_state == SZOMB)
