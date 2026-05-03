@@ -1,0 +1,87 @@
+name: Sequential Extreme Multi-Platform Test
+
+on: [push, pull_request]
+
+jobs:
+  # 1. WINDOWS (x64 & ARM64)
+  windows-suite:
+    name: Windows Suite
+    strategy:
+      matrix:
+        # Note: GitHub-hosted ARM64 Windows runners are currently in limited beta.
+        # Most users use 'windows-latest' (x64) or self-hosted for ARM64.
+        os: [windows-2019, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: systeminfo
+
+  # 2. MACOS (Intel & Apple Silicon)
+  macos-suite:
+    needs: windows-suite
+    name: macOS Suite
+    strategy:
+      matrix:
+        # macos-13 is Intel, macos-14 is Apple Silicon (M1/M2)
+        os: [macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: uname -a && arch
+
+  # 3. LINUX DISTROS (Docker-based)
+  linux-distros:
+    needs: macos-suite
+    name: Linux Distros
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: [ubuntu:latest, fedora:latest, opensuse/leap, debian:stable, archlinux:latest, alpine:latest]
+    container:
+      image: ${{ matrix.distro }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cat /etc/os-release
+
+  # 4. BSD FAMILY (VM-based)
+  bsd-suite:
+    needs: linux-distros
+    name: BSD Suite
+    runs-on: macos-12
+    strategy:
+      matrix:
+        os: [freebsd, openbsd, netbsd, dragonflybsd]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in ${{ matrix.os }}
+        uses: vmactions/${{ matrix.os }}-vm@v1
+        with:
+          run: uname -a
+
+  # 5. SOLARIS / ILLUMOS (VM-based)
+  solaris-suite:
+    needs: bsd-suite
+    name: Solaris Suite
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in Solaris
+        uses: vmactions/solaris-vm@v1
+        with:
+          run: uname -a
+
+  # 6. EXOTIC ARCHITECTURES (QEMU-based)
+  exotic-arch:
+    needs: solaris-suite
+    name: Architecture Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, ppc64le, s390x, riscv64, armv7]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Run on ${{ matrix.arch }}
+        run: |
+          docker run --rm --platform linux/${{ matrix.arch }} alpine uname -m
