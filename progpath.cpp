@@ -151,6 +151,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
     return;
 
   /* work on a copy */
+  if (buflen > MAXPATHLEN) buflen = MAXPATHLEN;
   strncpy(rbuf, buf, buflen - 1);
   rbuf[MAXPATHLEN - 1] = '\0';
 
@@ -183,8 +184,10 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 
   /* copy full paths back to caller */
-  if (rbuf[0] == '/')
-    strncpy(buf, rbuf, buflen);
+  if (rbuf[0] == '/') {
+    strncpy(buf, rbuf, buflen - 1);
+    buf[buflen - 1] = '\0';
+  }
 }
 
 /* perform operations common to every method.  given a final output
@@ -203,7 +206,7 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
     return;
 
   print_method(m, buf);
-  resolve_to_full_path(buf, MAXPATHLEN);
+  resolve_to_full_path(buf, buflen);
   print_method(m, buf);
 }
 
@@ -439,10 +442,13 @@ char *progpath(char *buf, size_t buflen) {
     DWORD ret = GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
     struct method m = METHOD("GetModuleFileName");
     if (ret > 0 && ret < MAXPATHLEN) {
-      if (sizeof(TCHAR) == sizeof(char))
-        strncpy(mbuf, exeFileName, MAXPATHLEN - 1);
-      else
-        wcstombs(mbuf, exeFileName, wcslen(mbuf) + 1);
+      if (sizeof(TCHAR) == sizeof(char)) {
+        strncpy(mbuf, (const char *)exeFileName, MAXPATHLEN - 1);
+        mbuf[MAXPATHLEN - 1] = '\0';
+      } else {
+        wcstombs(mbuf, (const wchar_t *)exeFileName, MAXPATHLEN - 1);
+        mbuf[MAXPATHLEN - 1] = '\0';
+      }
       finalize(m, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
         chdir_if_diff(cwd);
@@ -807,10 +813,14 @@ char *progpath(char *buf, size_t buflen) {
     snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/psinfo", getpid());
     fd = open(pbuf, O_RDONLY);
     if (fd >= 0) {
-      read(fd, &p, sizeof(p));
+      if (read(fd, &p, sizeof(p)) == sizeof(p)) {
+        /* NOTE: pr_argv is a pointer in the process address space.
+         * This only works if we are reading our own psinfo.
+         */
+        argv0 = ((char **)p.pr_argv)[0];
+        finalize(m, mbuf, MAXPATHLEN, argv0);
+      }
       close(fd);
-      argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
-      finalize(m, mbuf, MAXPATHLEN, argv0);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
         chdir_if_diff(cwd);
         return buf;

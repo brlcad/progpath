@@ -43,7 +43,7 @@ extern "C" {
 #  endif
 #else
 #  if defined(__GNUC__) && __GNUC__ >= 4
-#    define PROGPATH_EXPORT __attribute__ ((visibility ("default")))
+#    define PROGPATH_EXPORT __attribute__((visibility("default")))
 #  else
 #    define PROGPATH_EXPORT
 #  endif
