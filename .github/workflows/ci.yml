@@ -39,7 +39,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cppcheck
-        cppcheck --enable=all --inconclusive --error-exitcode=1 . -i build -i build_strict -i .build
+        cppcheck --enable=all --inconclusive --error-exitcode=1 . -i build -i build_strict -i build_san -i .build
 
     - name: Configure CMake (Sanitizers)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
@@ -57,5 +57,6 @@ jobs:
     - name: Check Formatting
       if: matrix.os == 'ubuntu-latest'
       run: |
+        sudo apt-get update
         sudo apt-get install -y clang-format
-        find . -name "*.[ch]" -o -name "*.cpp" | xargs clang-format --dry-run --Werror
+        find . \( -name "*.[ch]" -o -name "*.cpp" \) -not -path "./build*" -not -path "./.git*" | xargs clang-format --dry-run --Werror
