@@ -89,7 +89,7 @@ function(CHECK_PROG_PATH)
   check_symbol_exists(program_invocation_short_name errno.h HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME2)
 
   # functions
-  check_function_exists(GetModuleFileName HAVE_GETMODULEFILENAME)
+  check_function_exists(GetModuleFileNameA HAVE_GETMODULEFILENAMEA)
   check_function_exists(_NSGetExecutablePath HAVE__NSGETEXECUTABLEPATH)
   check_function_exists(_get_pgmptr HAVE__GET_PGMPTR)
   check_function_exists(_getcwd HAVE__GETCWD)

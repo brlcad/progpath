@@ -151,7 +151,8 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
     return;
 
   /* work on a copy */
-  if (buflen > MAXPATHLEN) buflen = MAXPATHLEN;
+  if (buflen > MAXPATHLEN) 
+    buflen = MAXPATHLEN;
   strncpy(rbuf, buf, buflen - 1);
   rbuf[MAXPATHLEN - 1] = '\0';
 
@@ -159,8 +160,9 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   if (rbuf[0] == '/' || rbuf[0] == '.') {
 #ifdef HAVE_REALPATH
     char rpbuf[MAXPATHLEN] = {0};
-    realpath(rbuf, rpbuf);
-    strncpy(rbuf, rpbuf, MAXPATHLEN);
+    if (realpath(rbuf, rpbuf)) {
+      strncpy(rbuf, rpbuf, MAXPATHLEN - 1);
+    }
 #endif
   }
 
@@ -435,20 +437,12 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
   /* UNVERIFIED: Windows */
-#ifdef HAVE_GETMODULEFILENAME
+#ifdef HAVE_GETMODULEFILENAMEA
   {
     char mbuf[MAXPATHLEN] = {0};
-    TCHAR exeFileName[MAXPATHLEN] = {0};
-    DWORD ret = GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
-    struct method m = METHOD("GetModuleFileName");
+    DWORD ret = GetModuleFileNameA(NULL, mbuf, MAXPATHLEN);
+    struct method m = METHOD("GetModuleFileNameA");
     if (ret > 0 && ret < MAXPATHLEN) {
-      if (sizeof(TCHAR) == sizeof(char)) {
-        strncpy(mbuf, (const char *)exeFileName, MAXPATHLEN - 1);
-        mbuf[MAXPATHLEN - 1] = '\0';
-      } else {
-        wcstombs(mbuf, (const wchar_t *)exeFileName, MAXPATHLEN - 1);
-        mbuf[MAXPATHLEN - 1] = '\0';
-      }
       finalize(m, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
         chdir_if_diff(cwd);
@@ -606,8 +600,7 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN - 1;
     int mib[4] = {CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME};
     struct method m = METHOD("sysctl(KERN_PROC_ARGS)");
-    len = buflen;
-    sysctl(mib, 4, buf, &len, NULL, 0);
+    sysctl(mib, 4, mbuf, &len, NULL, 0);
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -628,14 +621,16 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("sysctl(KERN_PROCARGS2)");
     sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
     pbuf = (char *)calloc(argmax, sizeof(char));
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROCARGS2;
-    mib[2] = getpid();
-    mib[3] = -1;
-    pbufsz = (size_t)argmax; /* must be full size or sysctl returns nothing */
-    sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* from sysctl, exec_path comes after argc */
-    free(pbuf);
+    if (pbuf) {
+      mib[0] = CTL_KERN;
+      mib[1] = KERN_PROCARGS2;
+      mib[2] = getpid();
+      mib[3] = -1;
+      pbufsz = (size_t)argmax; /* must be full size or sysctl returns nothing */
+      sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
+      finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int)); /* exec_path comes after argc */
+      free(pbuf);
+    }
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
       return buf;
@@ -669,9 +664,11 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("sysctl(KERN_PROCNAME)");
     sysctl(mib, 4, NULL, &len, NULL, 0);
     retargs = (char **)calloc(len, sizeof(char *));
-    sysctl(mib, 4, retargs, &len, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, retargs[0]);
-    free(retargs);
+    if (retargs) {
+      sysctl(mib, 4, retargs, &len, NULL, 0);
+      finalize(m, mbuf, MAXPATHLEN, retargs[0]);
+      free(retargs);
+    }
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
       return buf;
@@ -817,7 +814,7 @@ char *progpath(char *buf, size_t buflen) {
         /* NOTE: pr_argv is a pointer in the process address space.
          * This only works if we are reading our own psinfo.
          */
-        argv0 = ((char **)p.pr_argv)[0];
+        argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
         finalize(m, mbuf, MAXPATHLEN, argv0);
       }
       close(fd);
