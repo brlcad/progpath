@@ -25,11 +25,11 @@ if (PROGPATH_STRICT)
   set(PP_CFLAGS_NOT_MSVC -Wall -Wextra -pedantic -Werror -g -ggdb)
 endif (PROGPATH_STRICT)
 
-if (CXX_COMPILER_ID EQUAL "MSVC")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   list(APPEND PP_CFLAGS ${PP_CFLAGS_MSVC})
-else (CXX_COMPILER_ID EQUAL "MSVC")
+else ()
   list(APPEND PP_CFLAGS ${PP_CFLAGS_NOT_MSVC})
-endif (CXX_COMPILER_ID EQUAL "MSVC")
+endif ()
 
 include(CheckProgPath)
 
