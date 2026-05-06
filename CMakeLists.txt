@@ -43,6 +43,14 @@ configure_file(
   )
 include_directories("${PROJECT_BINARY_DIR}")
 
+# cross-reference HAVE_* symbols across config template, cmake checks,
+# and source code — warns at configure time if any are inconsistent
+validate_config_symbols(
+  "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
+  "${PROJECT_SOURCE_DIR}/CheckProgPath.cmake"
+  "${PROJECT_SOURCE_DIR}/progpath.cpp"
+)
+
 ###
 # main progpath library, compiled static and dynamic
 ###
@@ -134,4 +142,14 @@ else (HAVE_TLO)
 endif (HAVE_TLO)
 
 enable_testing()
+
+# CTest that fails if validate_config_symbols() found mismatches
+add_test(NAME validate_config_symbols
+  COMMAND ${CMAKE_COMMAND} -E echo "HAVE_* symbols are consistent"
+)
+if (PROGPATH_CONFIG_WARNINGS)
+  # override to always fail when warnings exist
+  set_tests_properties(validate_config_symbols PROPERTIES WILL_FAIL true)
+endif()
+
 add_subdirectory(tests)

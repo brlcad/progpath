@@ -77,8 +77,8 @@ function(CHECK_PROG_PATH)
   check_include_file("windows.h" HAVE_WINDOWS_H)
 
   # global variables
-  check_function_exists(__argv HAVE_DECL__ARGV)
-  check_symbol_exists(__argv stdlib.h HAVE_DECL__ARGV2)
+  check_function_exists(__argv HAVE_DECL___ARGV)
+  check_symbol_exists(__argv stdlib.h HAVE_DECL___ARGV2)
   check_function_exists(__progname HAVE_DECL___PROGNAME)
   check_symbol_exists(__progname stdlib.h HAVE_DECL___PROGNAME2)
   check_function_exists(__progname_full HAVE_DECL___PROGNAME_FULL)
@@ -89,6 +89,7 @@ function(CHECK_PROG_PATH)
   check_symbol_exists(program_invocation_short_name errno.h HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME2)
 
   # functions
+  check_function_exists(GetCurrentDirectory HAVE_GETCURRENTDIRECTORY)
   check_function_exists(GetModuleFileNameA HAVE_GETMODULEFILENAMEA)
   check_function_exists(_NSGetExecutablePath HAVE__NSGETEXECUTABLEPATH)
   check_function_exists(_get_pgmptr HAVE__GET_PGMPTR)
@@ -124,3 +125,55 @@ function(CHECK_PROG_PATH)
   check_struct_has_member("struct prpsinfo" pr_fname sys/procfs.h HAVE_STRUCT_PRPSINFO)
   
 endfunction(CHECK_PROG_PATH)
+
+# Validate that every HAVE_* symbol is consistent across the three
+# key files: progpath_config.h.in (template), CheckProgPath.cmake
+# (detection), and progpath.cpp (usage).  Warns at configure time
+# if any symbol falls through the cracks.
+function(VALIDATE_CONFIG_SYMBOLS config_template cmake_module source_file)
+  set(_warnings)
+
+  # 1. Read progpath_config.h.in — extract HAVE_* from #cmakedefine lines
+  file(READ "${config_template}" _config_content)
+  string(REGEX MATCHALL "HAVE_[A-Za-z0-9_]+" _config_symbols "${_config_content}")
+  list(REMOVE_DUPLICATES _config_symbols)
+
+  # 2. Read CheckProgPath.cmake — extract HAVE_* from check_* calls
+  file(READ "${cmake_module}" _cmake_content)
+  string(REGEX MATCHALL "HAVE_[A-Za-z0-9_]+" _cmake_symbols "${_cmake_content}")
+  list(REMOVE_DUPLICATES _cmake_symbols)
+
+  # 3. Read progpath.cpp — extract HAVE_* from #ifdef / #if defined() usage
+  file(READ "${source_file}" _source_content)
+  string(REGEX MATCHALL "HAVE_[A-Za-z0-9_]+" _source_symbols "${_source_content}")
+  list(REMOVE_DUPLICATES _source_symbols)
+
+  # Check: every symbol in config template should have a CMake check
+  foreach(_sym ${_config_symbols})
+    list(FIND _cmake_symbols "${_sym}" _idx)
+    if (_idx EQUAL -1)
+      list(APPEND _warnings "CONFIG_NO_CMAKE: ${_sym} in ${config_template} but no CMake check")
+    endif()
+  endforeach()
+
+  # Check: every symbol used in source should be in config template
+  foreach(_sym ${_source_symbols})
+    list(FIND _config_symbols "${_sym}" _idx)
+    if (_idx EQUAL -1)
+      list(APPEND _warnings "SOURCE_NO_CONFIG: ${_sym} used in ${source_file} but not in ${config_template}")
+    endif()
+  endforeach()
+
+  # Report
+  list(LENGTH _warnings _nwarn)
+  if (_nwarn GREATER 0)
+    message(WARNING "validate_config_symbols: ${_nwarn} HAVE_* mismatch(es) found:")
+    foreach(_w ${_warnings})
+      message(WARNING "  ${_w}")
+    endforeach()
+    set(PROGPATH_CONFIG_WARNINGS "${_warnings}" CACHE INTERNAL "Config symbol warnings")
+  else()
+    message(STATUS "validate_config_symbols: all HAVE_* symbols are consistent")
+    set(PROGPATH_CONFIG_WARNINGS "" CACHE INTERNAL "Config symbol warnings")
+  endif()
+endfunction(VALIDATE_CONFIG_SYMBOLS)
