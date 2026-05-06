@@ -73,6 +73,9 @@
 #ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
 #endif
+#ifdef HAVE_LIBPROC_H /* for proc_pidpath */
+#  include <libproc.h>
+#endif
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h> /* for access */
 #endif
@@ -84,11 +87,24 @@
 /* helper to simplify initialization */
 #define METHOD(x) {method++, __LINE__, (x), debug}
 
+/* Forward-declarations for functions that exist on some platforms but may
+ * not be declared in any available system header without the right includes.
+ * Each is conditionally omitted when a proper declaration has been detected.
+ */
 extern "C" {
-extern const char *getprogname(void);
-extern const char *getexecname(void);
-extern void proc_pidpath(int, char *, size_t);
-extern int chdir(const char *);
+#ifndef HAVE_DECL_GETPROGNAME
+  extern const char *getprogname(void);
+#endif
+#ifndef HAVE_DECL_GETEXECNAME
+  extern const char *getexecname(void);
+#endif
+#ifndef HAVE_DECL_PROC_PIDPATH
+  /* proc_pidpath returns int (errno on failure, 0 on success) */
+  extern int proc_pidpath(int, void *, uint32_t);
+#endif
+#ifndef HAVE_DECL_CHDIR
+  extern int chdir(const char *);
+#endif
 }
 
 #ifndef MAXPATHLEN

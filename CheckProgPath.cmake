@@ -73,6 +73,7 @@ function(CHECK_PROG_PATH)
   check_include_file("sys/procfs.h" HAVE_SYS_PROCFS_H)
   check_include_file("sys/types.h" HAVE_SYS_TYPES_H)
   check_include_file("sys/wait.h" HAVE_SYS_WAIT_H)
+  check_include_file("libproc.h" HAVE_LIBPROC_H)
   check_include_file("unistd.h" HAVE_UNISTD_H)
   check_include_file("windows.h" HAVE_WINDOWS_H)
 
@@ -87,6 +88,22 @@ function(CHECK_PROG_PATH)
   check_symbol_exists(program_invocation_name errno.h HAVE_DECL_PROGRAM_INVOCATION_NAME2)
   check_function_exists(program_invocation_short_name HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME)
   check_symbol_exists(program_invocation_short_name errno.h HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME2)
+
+  # function declaration probes — used to conditionalize extern "C" forward-decls
+  # that are needed on platforms where the function exists but its header may not
+  # declare it (e.g. old Solaris, some BSDs without the right includes)
+  check_symbol_exists(getprogname "stdlib.h" HAVE_DECL_GETPROGNAME)
+  check_symbol_exists(getexecname "stdlib.h" HAVE_DECL_GETEXECNAME)
+  check_symbol_exists(chdir "unistd.h" HAVE_DECL_CHDIR)
+  # proc_pidpath — check libproc.h first, then fall back to source compile
+  if (HAVE_LIBPROC_H)
+    check_symbol_exists(proc_pidpath "libproc.h" HAVE_DECL_PROC_PIDPATH)
+  else ()
+    check_c_source_compiles(
+      "#include <sys/types.h>\nint proc_pidpath(int, void *, unsigned int);\nint main() { return 0; }"
+      HAVE_DECL_PROC_PIDPATH
+    )
+  endif ()
 
   # functions
   check_function_exists(GetCurrentDirectory HAVE_GETCURRENTDIRECTORY)
