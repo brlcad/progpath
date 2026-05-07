@@ -219,7 +219,11 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
         char *dir = strtok(path_dup, ":");
         while (dir) {
           char full_path[MAXPATHLEN] = {0};
-          snprintf(full_path, MAXPATHLEN - 1, "%s/%s", dir, rbuf);
+          int written = snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
+          if (written < 0 || written >= MAXPATHLEN) {
+            dir = strtok(NULL, ":");
+            continue;
+          }
           if (access(full_path, X_OK) == 0) {
             strncpy(rbuf, full_path, MAXPATHLEN - 1);
             break;
