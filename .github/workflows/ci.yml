@@ -43,7 +43,7 @@ jobs:
       run: |
         export PKG_CONFIG_PATH=${{ github.workspace }}/inst/lib/pkgconfig
         pkg-config --cflags --libs progpath
-        pkg-config --cflags --libs progpath | grep "-lprogpath"
+        pkg-config --cflags --libs progpath | grep "\-lprogpath"
 
     - name: Configure CMake (Strict)
       run: cmake -B build_strict -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_STRICT=ON
