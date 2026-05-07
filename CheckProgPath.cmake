@@ -77,6 +77,8 @@ function(CHECK_PROG_PATH)
   check_include_file("libproc.h" HAVE_LIBPROC_H)
   check_include_file("unistd.h" HAVE_UNISTD_H)
   check_include_file("windows.h" HAVE_WINDOWS_H)
+  check_include_file("io.h" HAVE_IO_H)
+  check_include_file("process.h" HAVE_PROCESS_H)
 
   # global variables
   check_function_exists(__argv HAVE_DECL___ARGV)
