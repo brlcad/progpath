@@ -201,3 +201,40 @@ jobs:
             cmake -B build -DCMAKE_BUILD_TYPE=Release
             cmake --build build
             cd build && ctest --output-on-failure
+
+  # 7. MIDNIGHTBSD — FreeBSD-derived, uses mport/pkg.
+  midnightbsd:
+    name: MidnightBSD (4.0.4)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on MidnightBSD
+        uses: cross-platform-actions/action@v1.0.0
+        with:
+          operating_system: midnightbsd
+          version: '4.0.4'
+          shell: bash
+          run: |
+            pkg install -y cmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # 8. OMNIOS — illumos/Solaris-family.
+  # Exercises getexecname and /proc/self/path/a.out methods.
+  omnios:
+    name: OmniOS (r151056)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test on OmniOS
+        uses: cross-platform-actions/action@v1.0.0
+        with:
+          operating_system: omnios
+          version: 'r151056'
+          shell: bash
+          run: |
+            pkg install cmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
