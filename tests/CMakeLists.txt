@@ -14,3 +14,21 @@ add_executable(test_cpp test_cpp.cpp)
 target_link_libraries(test_cpp progpath-static)
 target_include_directories(test_cpp PRIVATE ${PROJECT_SOURCE_DIR})
 add_test(NAME test_cpp COMMAND test_cpp)
+
+add_executable(test_correctness test_correctness.c)
+target_link_libraries(test_correctness progpath-static)
+target_include_directories(test_correctness PRIVATE ${PROJECT_SOURCE_DIR})
+add_test(NAME test_correctness COMMAND test_correctness)
+
+# Validate progpath binary actually reports absolute paths.  Runs the
+# demo program and checks the output.  Also sets PROGPATH_DEBUG=3 so
+# failures produce useful output even without --output-on-failure.
+add_test(NAME progpath_bin_output
+  COMMAND ${CMAKE_COMMAND} -E env PROGPATH_DEBUG=3
+    $<TARGET_FILE:progpath-bin>
+)
+set_tests_properties(progpath_bin_output PROPERTIES
+  PASS_REGULAR_EXPRESSION "Program executable is \\[ /"
+  FAIL_REGULAR_EXPRESSION  "ERROR:"
+)
+
