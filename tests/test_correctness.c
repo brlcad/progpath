@@ -42,14 +42,12 @@ static int is_absolute(const char *path) {
     return 0;
   if (path[0] == '/')
     return 1;
-#ifdef _WIN32
   /* drive-letter path: C:\ or C:/ */
   if (path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
     return 1;
   /* UNC path: \\server\share */
   if (path[0] == '\\' && path[1] == '\\')
     return 1;
-#endif
   return 0;
 }
 
