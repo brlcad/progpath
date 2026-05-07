@@ -168,7 +168,11 @@ static int is_path_absolute(const char *path) {
   if (path[0] == '/')
     return 1;
   /* drive-letter path: C:\ or C:/ */
-  if (isalpha(path[0]) && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+  if (
+#ifdef HAVE_CTYPE_H
+      isalpha(path[0]) &&
+#endif
+      path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
     return 1;
   /* UNC path: \\server\share */
   if (path[0] == '\\' && path[1] == '\\')
