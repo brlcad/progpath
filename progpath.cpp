@@ -87,8 +87,12 @@
 /* helper to simplify initialization */
 #define METHOD(x) {method++, __LINE__, (x), debug}
 
-/* helper to identify full paths */
-#define IS_PATH_ABSOLUTE(buf) (((buf[0] == '/') || (rbuf[0] != '\0' && rbuf[1] == ':' && (rbuf[2] == '\\' || rbuf[2] == '/'))) ? 1 : 0)
+/* helper to identify full paths — works for both Unix ('/') and
+ * Windows drive-letter paths (e.g. C:\ or C:/) */
+#define IS_PATH_ABSOLUTE(p) \
+  (((p)[0] == '/') || \
+   ((p)[0] != '\0' && (p)[1] == ':' && ((p)[2] == '\\' || (p)[2] == '/'))) \
+  ? 1 : 0
 
 /* Declare funcs without requiring they be available in system
  * headers without the right includes.
