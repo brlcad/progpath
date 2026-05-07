@@ -36,6 +36,32 @@ that code is included and compiled by default, so can see it in action:
     Initial working dir is [ /Users/morrison ]
 ```
 
+## Initialization
+
+progpath captures the initial working directory (ipwd) once, as early as
+possible, so `progipwd()` returns it correctly even after `chdir()`.  How
+that capture happens depends on how you link the library:
+
+| Linking mode | Init behavior |
+|---|---|
+| Shared library (`.so`/`.dylib`/`.dll`) | Automatic — C++ static constructor fires before `main()`. Nothing to do. |
+| Static lib, linked from **C++** | Same — C++ runtime fires the constructor. |
+| Static lib, linked from **pure C** | **Lazy** — ipwd is captured on the first call to `progipwd()` or `progpath()`. Call one of them early in `main()`, before any `chdir()`. |
+
+For the pure-C static case, the safe pattern is:
+
+```c
+int main(int argc, char *argv[]) {
+    char ipwd[4096];
+    progipwd(ipwd, sizeof(ipwd));  /* capture before any chdir */
+    /* ... rest of program ... */
+}
+```
+
+Thread safety: do not call progpath/progipwd concurrently before the
+first capture completes.  Initialize from the main thread before spawning
+other threads.
+
 other efforts implement similar functionality, but where progpath differs is:
 
 1. absolute API simplicity,

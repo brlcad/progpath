@@ -50,6 +50,38 @@ extern "C" {
 #endif
 
 /**
+ * @section Initialization
+ *
+ * progpath captures the application's initial working directory (ipwd)
+ * once, as early as possible, so that progipwd() can return it correctly
+ * even after the process has called chdir().  When and how this capture
+ * happens depends on how you link the library:
+ *
+ * **Shared library** (libprogpath.so / .dylib / .dll):
+ *   A C++ static constructor runs automatically before main().  No
+ *   action required from the caller.
+ *
+ * **Static library linked from C++** (-lprogpath-static, compiled as C++):
+ *   Same as above — the C++ runtime fires the static constructor.
+ *
+ * **Static library linked from pure C** (-lprogpath-static, no C++ runtime):
+ *   The C++ static constructor does NOT run.  progipwd() captures the
+ *   working directory on its first call.  To ensure accuracy, call
+ *   progipwd() (or progpath()) as early as possible in main(), before
+ *   any explicit chdir() call.  Example:
+ *
+ *     int main(int argc, char *argv[]) {
+ *       char ipwd[4096];
+ *       progipwd(ipwd, sizeof(ipwd)); // capture ipwd before any chdir
+ *       // ... rest of program
+ *     }
+ *
+ * Thread safety: concurrent calls before the first capture completes
+ * are not guaranteed safe.  Initialize from the main thread before
+ * spawning other threads.
+ */
+
+/**
  * @brief Get the absolute filesystem path to the application's binary.
  *
  * A path string will be written to the provided 'buf' buffer. It will write
