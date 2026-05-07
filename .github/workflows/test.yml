@@ -181,25 +181,23 @@ jobs:
             cmake --build build
             cd build && ctest --output-on-failure
 
-  # 6. EXOTIC ARCHITECTURES (QEMU + Docker)
-  exotic-arch:
-    name: Arch (${{ matrix.arch }})
+  # 6. HAIKU — exercises find_path(B_APP_IMAGE_SYMBOL), getprogname,
+  # __progname, and dladdr, all currently UNVERIFIED in progpath.cpp.
+  # Uses cross-platform-actions/action which boots a real Haiku VM on
+  # an Ubuntu host via QEMU under the hood.
+  haiku:
+    name: Haiku (r1beta5)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [arm64, ppc64le, s390x, riscv64, armv7]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Build and test on ${{ matrix.arch }}
-        run: |
-          docker run --rm --platform linux/${{ matrix.arch }} \
-            -v "${{ github.workspace }}:/src" -w /src \
-            alpine sh -c "
-              apk add --no-cache cmake build-base &&
-              cmake -B build -DCMAKE_BUILD_TYPE=Release &&
-              cmake --build build &&
-              cd build && ctest --output-on-failure
-            "
+      - name: Test on Haiku
+        uses: cross-platform-actions/action@v1.0.0
+        with:
+          operating_system: haiku
+          version: 'r1beta5'
+          shell: bash
+          run: |
+            pkgman install -y cmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
