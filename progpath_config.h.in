@@ -2,6 +2,7 @@
 #cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
 #cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
 #cmakedefine HAVE_FINDDIRECTORY_H @HAVE_FINDDIRECTORY_H@
+#cmakedefine HAVE_IO_H @HAVE_IO_H@
 #cmakedefine HAVE_LIBPROC_H @HAVE_LIBPROC_H@
 #cmakedefine HAVE_MACH_O_DYLD_H @HAVE_MACH_O_DYLD_H@
 #cmakedefine HAVE_PROCINFO_H @HAVE_PROCINFO_H@
@@ -13,6 +14,7 @@
 #cmakedefine HAVE_SYS_TYPES_H @HAVE_SYS_TYPES_H@
 #cmakedefine HAVE_SYS_WAIT_H @HAVE_SYS_WAIT_H@
 #cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
+#cmakedefine HAVE_PROCESS_H @HAVE_PROCESS_H@
 #cmakedefine HAVE_WINDOWS_H @HAVE_WINDOWS_H@
 
 #cmakedefine HAVE_DLADDR @HAVE_DLADDR@
