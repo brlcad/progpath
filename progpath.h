@@ -35,17 +35,19 @@ extern "C" {
 
 #define PROGPATH_VERSION "1.0.0"
 
-#if defined(_WIN32) || defined(__CYGWIN__)
-#  if defined(PROGPATH_EXPORTS)
-#    define PROGPATH_EXPORT __declspec(dllexport)
+#ifndef PROGPATH_EXPORT
+#  if defined(_WIN32) || defined(__CYGWIN__)
+#    if defined(PROGPATH_EXPORTS)
+#      define PROGPATH_EXPORT __declspec(dllexport)
+#    else
+#      define PROGPATH_EXPORT __declspec(dllimport)
+#    endif
 #  else
-#    define PROGPATH_EXPORT __declspec(dllimport)
-#  endif
-#else
-#  if defined(__GNUC__) && __GNUC__ >= 4
-#    define PROGPATH_EXPORT __attribute__((visibility("default")))
-#  else
-#    define PROGPATH_EXPORT
+#    if defined(__GNUC__) && __GNUC__ >= 4
+#      define PROGPATH_EXPORT __attribute__((visibility("default")))
+#    else
+#      define PROGPATH_EXPORT
+#    endif
 #  endif
 #endif
 
