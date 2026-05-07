@@ -186,7 +186,6 @@ static int is_path_absolute(const char *path) {
  */
 static void resolve_to_full_path(char *buf, size_t buflen) {
   char rbuf[MAXPATHLEN] = {0};
-  int is_absolute;
 
   if (!buf || buflen < 1)
     return;
@@ -207,15 +206,10 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
 #endif
   }
 
-  /* check if path is already absolute:
-   *   Unix:    starts with '/'
-   *   Windows: drive letter paths (e.g. C:\ or C:/)
-   */
-  is_absolute = is_path_absolute(rbuf);
-
+  /* if path is already absolute, no need to keep looking */
   /* try resolving via Windows SearchPath API */
 #ifdef HAVE_SEARCHPATHA
-  if (!is_absolute) {
+  if (!is_path_absolute(rbuf)) {
     char found[MAXPATHLEN] = {0};
     char *file_part = NULL;
     if (SearchPathA(NULL, rbuf, ".exe", MAXPATHLEN - 1, found, &file_part) > 0) {
@@ -224,10 +218,8 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 #endif
 
-  is_absolute = is_path_absolute(rbuf);
-
   /* if still not absolute, resolve via PATH */
-  if (!is_absolute) {
+  if (!is_path_absolute(rbuf)) {
     char *path_env = getenv("PATH");
     if (path_env) {
       char *path_dup = strdup(path_env);
