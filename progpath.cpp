@@ -942,7 +942,7 @@ char *progpath(char *buf, size_t buflen) {
     char pbuf[MAXPATHLEN] = {0};
     int fd;
     struct method m = METHOD("read(/proc/$PID/cmdline)");
-    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", getpid());
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", (int)getpid());
     fd = open(pbuf, O_RDONLY);
     if (fd >= 0) {
       read(fd, mbuf, MAXPATHLEN - 1);
