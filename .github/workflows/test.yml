@@ -85,15 +85,36 @@ jobs:
         run: ctest --output-on-failure
 
   # 4. BSD FAMILY (VM-based via vmactions)
-  freebsd:
-    name: BSD (freebsd)
+
+  # FreeBSD without procfs: exercises sysctl(KERN_PROC_PATHNAME) and
+  # other non-proc methods. procfs is intentionally NOT mounted.
+  freebsd-noproc:
+    name: BSD (freebsd, no /proc)
     runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
-      - name: Test in FreeBSD
+      - name: Test in FreeBSD (no /proc)
         uses: vmactions/freebsd-vm@v1
         with:
           prepare: pkg install -y cmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # FreeBSD with procfs mounted: additionally exercises
+  # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
+  freebsd-proc:
+    name: BSD (freebsd, with /proc)
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in FreeBSD (with /proc)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          prepare: |
+            pkg install -y cmake
+            mount -t procfs proc /proc
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Release
             cmake --build build
