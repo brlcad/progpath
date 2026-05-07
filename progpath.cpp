@@ -86,11 +86,14 @@
 #  include <process.h>
 #endif
 #ifdef HAVE_WINDOWS_H
+#  define _CRT_SECURE_NO_WARNINGS
 #  include <windows.h>
 #  define chdir _chdir
+#  define getcwd _getcwd
 #  define getpid _getpid
 #  define open _open
 #  define read _read
+#  define strdup _strdup
 #  define close _close
 #  ifndef O_RDONLY
 #    define O_RDONLY 0
