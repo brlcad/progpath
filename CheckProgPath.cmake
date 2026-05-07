@@ -63,6 +63,7 @@ function(CHECK_PROG_PATH)
 
   # headers with potentially relevant API
   check_include_file("FindDirectory.h" HAVE_FINDDIRECTORY_H)
+  check_include_file("ctype.h" HAVE_CTYPE_H)
   check_include_file("dlfcn.h" HAVE_DLFCN_H)
   check_include_file("fcntl.h" HAVE_FCNTL_H)
   check_include_file("mach-o/dyld.h" HAVE_MACH_O_DYLD_H)

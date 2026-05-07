@@ -1,3 +1,4 @@
+#cmakedefine HAVE_CTYPE_H @HAVE_CTYPE_H@
 #cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
 #cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
 #cmakedefine HAVE_FINDDIRECTORY_H @HAVE_FINDDIRECTORY_H@

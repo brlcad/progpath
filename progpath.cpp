@@ -83,16 +83,12 @@
 #  include <windows.h>
 #  define chdir _chdir
 #endif
+#ifdef HAVE_CTYPE_H
+#  include <ctype.h> /* for isalpha */
+#endif
 
 /* helper to simplify initialization */
 #define METHOD(x) {method++, __LINE__, (x), debug}
-
-/* helper to identify full paths — works for both Unix ('/') and
- * Windows drive-letter paths (e.g. C:\ or C:/) */
-#define IS_PATH_ABSOLUTE(p) \
-  (((p)[0] == '/') || \
-   ((p)[0] != '\0' && (p)[1] == ':' && ((p)[2] == '\\' || (p)[2] == '/'))) \
-  ? 1 : 0
 
 /* Declare funcs without requiring they be available in system
  * headers without the right includes.
@@ -163,6 +159,24 @@ static void print_method(struct method m, const char *result) {
   pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
 
+
+/* reports if a given path looks absolute on this platform */
+static int is_path_absolute(const char *path) {
+  if (!path || path[0] == '\0')
+    return 0;
+  /* unix-style */
+  if (path[0] == '/')
+    return 1;
+  /* drive-letter path: C:\ or C:/ */
+  if (isalpha(path[0]) && path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+    return 1;
+  /* UNC path: \\server\share */
+  if (path[0] == '\\' && path[1] == '\\')
+    return 1;
+  return 0;
+}
+
+
 /* this function expands a given path, only modifying 'buf' with the
  * full path if it appears to have succeeded.
  */
@@ -193,7 +207,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
    *   Unix:    starts with '/'
    *   Windows: drive letter paths (e.g. C:\ or C:/)
    */
-  is_absolute = IS_PATH_ABSOLUTE(rbuf);
+  is_absolute = is_path_absolute(rbuf);
 
   /* try resolving via Windows SearchPath API */
 #ifdef HAVE_SEARCHPATHA
@@ -206,7 +220,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 #endif
 
-  is_absolute = IS_PATH_ABSOLUTE(rbuf);
+  is_absolute = is_path_absolute(rbuf);
 
   /* if still not absolute, resolve via PATH */
   if (!is_absolute) {
@@ -237,7 +251,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 
   /* copy full paths back to caller */
-  if (IS_PATH_ABSOLUTE(rbuf)) {
+  if (is_path_absolute(rbuf)) {
     strncpy(buf, rbuf, buflen - 1);
     buf[buflen - 1] = '\0';
   }
