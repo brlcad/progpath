@@ -1113,7 +1113,7 @@ char *progpath(char *buf, size_t buflen) {
   return NULL;
 }
 
-void progpath_init(void) {
+void proginit(void) {
   if (progpath_ipwd[0] != '\0')
     return;
 
@@ -1123,7 +1123,7 @@ void progpath_init(void) {
 struct progpath_initializer {
   /* constructor */
   progpath_initializer() {
-    progpath_init();
+    proginit();
   }
   /* destructor */
   ~progpath_initializer() {
