@@ -79,9 +79,25 @@
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h> /* for access */
 #endif
+#ifdef HAVE_IO_H
+#  include <io.h>
+#endif
+#ifdef HAVE_PROCESS_H
+#  include <process.h>
+#endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
 #  define chdir _chdir
+#  define getpid _getpid
+#  define open _open
+#  define read _read
+#  define close _close
+#  ifndef O_RDONLY
+#    define O_RDONLY 0
+#  endif
+#  if defined(_MSC_VER) && _MSC_VER < 1900
+#    define snprintf _snprintf
+#  endif
 #endif
 #ifdef HAVE_CTYPE_H
 #  include <ctype.h> /* for isalpha */
