@@ -4,87 +4,181 @@ on: [push, pull_request]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # show path method debug output on any test failure
+  PROGPATH_DEBUG: 3
 
 jobs:
-  # 1. WINDOWS (x64 & ARM64)
+  # 1. WINDOWS (x64)
   windows-suite:
-    name: Windows Suite
+    name: Windows (${{ matrix.os }})
     strategy:
+      fail-fast: false
       matrix:
-        # Note: GitHub-hosted ARM64 Windows runners are currently in limited beta.
-        # Most users use 'windows-latest' (x64) or self-hosted for ARM64.
         os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: systeminfo
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        working-directory: build
+        run: ctest -C Release --output-on-failure
 
   # 2. MACOS (Intel & Apple Silicon)
   macos-suite:
-    needs: windows-suite
-    name: macOS Suite
+    name: macOS (${{ matrix.os }})
     strategy:
+      fail-fast: false
       matrix:
-        # macos-13 is Intel, macos-14 is Apple Silicon (M1/M2)
         os: [macos-13, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: uname -a && arch
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build --config Release
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
 
   # 3. LINUX DISTROS (Docker-based)
   linux-distros:
-    needs: macos-suite
-    name: Linux Distros
+    name: Linux (${{ matrix.distro }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        distro: [ubuntu:latest, fedora:latest, opensuse/leap, debian:stable, archlinux:latest, alpine:latest]
+        include:
+          - distro: ubuntu:latest
+            pkgs: cmake build-essential
+            install: apt-get update -q && apt-get install -y cmake build-essential
+          - distro: debian:stable
+            pkgs: cmake build-essential
+            install: apt-get update -q && apt-get install -y cmake build-essential
+          - distro: fedora:latest
+            pkgs: cmake gcc gcc-c++ make
+            install: dnf install -y cmake gcc gcc-c++ make
+          - distro: opensuse/leap
+            pkgs: cmake gcc gcc-c++ make
+            install: zypper install -y cmake gcc gcc-c++ make
+          - distro: archlinux:latest
+            pkgs: cmake base-devel
+            install: pacman -Sy --noconfirm cmake base-devel
+          - distro: alpine:latest
+            pkgs: cmake build-base
+            install: apk add --no-cache cmake build-base
     container:
       image: ${{ matrix.distro }}
     steps:
       - uses: actions/checkout@v4
-      - run: cat /etc/os-release
+      - name: Install dependencies
+        run: ${{ matrix.install }}
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
 
-  # 4. BSD FAMILY (VM-based)
-  bsd-suite:
-    needs: linux-distros
-    name: BSD Suite
-    runs-on: macos-12
-    strategy:
-      matrix:
-        os: [freebsd, openbsd, netbsd, dragonflybsd]
+  # 4. BSD FAMILY (VM-based via vmactions)
+  freebsd:
+    name: BSD (freebsd)
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
-      - name: Test in ${{ matrix.os }}
-        uses: vmactions/${{ matrix.os }}-vm@v1
+      - name: Test in FreeBSD
+        uses: vmactions/freebsd-vm@v1
         with:
-          run: uname -a
+          prepare: pkg install -y cmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  openbsd:
+    name: BSD (openbsd)
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          prepare: pkg_add cmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  netbsd:
+    name: BSD (netbsd)
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in NetBSD
+        uses: vmactions/netbsd-vm@v1
+        with:
+          prepare: |
+            export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/amd64/10.0/All/"
+            pkgin -y update && pkgin -y install cmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # DragonFlyBSD runs separately — different pkg manager
+  dragonflybsd:
+    name: BSD (dragonflybsd)
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test in DragonFlyBSD
+        uses: vmactions/dragonflybsd-vm@v1
+        with:
+          prepare: pkg install -y cmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake --build build
+            cd build && ctest --output-on-failure
 
   # 5. SOLARIS / ILLUMOS (VM-based)
   solaris-suite:
-    needs: bsd-suite
-    name: Solaris Suite
-    runs-on: macos-12
+    name: Solaris
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
       - name: Test in Solaris
         uses: vmactions/solaris-vm@v1
         with:
-          run: uname -a
+          prepare: |
+            pkgutil -y -i cmake gmake gcc4core
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # 6. EXOTIC ARCHITECTURES (QEMU-based)
+  # 6. EXOTIC ARCHITECTURES (QEMU + Docker)
   exotic-arch:
-    needs: solaris-suite
-    name: Architecture Suite
+    name: Arch (${{ matrix.arch }})
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [arm64, ppc64le, s390x, riscv64, armv7]
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      - name: Run on ${{ matrix.arch }}
+      - name: Build and test on ${{ matrix.arch }}
         run: |
-          docker run --rm --platform linux/${{ matrix.arch }} alpine uname -m
+          docker run --rm --platform linux/${{ matrix.arch }} \
+            -v "${{ github.workspace }}:/src" -w /src \
+            alpine sh -c "
+              apk add --no-cache cmake build-base &&
+              cmake -B build -DCMAKE_BUILD_TYPE=Release &&
+              cmake --build build &&
+              cd build && ctest --output-on-failure
+            "
