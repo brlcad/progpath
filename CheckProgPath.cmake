@@ -108,6 +108,7 @@ function(CHECK_PROG_PATH)
   # functions
   check_function_exists(GetCurrentDirectory HAVE_GETCURRENTDIRECTORY)
   check_function_exists(GetModuleFileNameA HAVE_GETMODULEFILENAMEA)
+  check_function_exists(SearchPathA HAVE_SEARCHPATHA)
   check_function_exists(_NSGetExecutablePath HAVE__NSGETEXECUTABLEPATH)
   check_function_exists(_get_pgmptr HAVE__GET_PGMPTR)
   check_function_exists(_getcwd HAVE__GETCWD)

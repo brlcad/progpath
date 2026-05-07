@@ -87,9 +87,11 @@
 /* helper to simplify initialization */
 #define METHOD(x) {method++, __LINE__, (x), debug}
 
-/* Forward-declarations for functions that exist on some platforms but may
- * not be declared in any available system header without the right includes.
- * Each is conditionally omitted when a proper declaration has been detected.
+/* helper to identify full paths */
+#define IS_PATH_ABSOLUTE(buf) (((buf[0] == '/') || (rbuf[0] != '\0' && rbuf[1] == ':' && (rbuf[2] == '\\' || rbuf[2] == '/'))) ? 1 : 0)
+
+/* Declare funcs without requiring they be available in system
+ * headers without the right includes.
  */
 extern "C" {
 #ifndef HAVE_DECL_GETPROGNAME
@@ -162,17 +164,18 @@ static void print_method(struct method m, const char *result) {
  */
 static void resolve_to_full_path(char *buf, size_t buflen) {
   char rbuf[MAXPATHLEN] = {0};
+  int is_absolute;
 
   if (!buf || buflen < 1)
     return;
 
   /* work on a copy */
-  if (buflen > MAXPATHLEN) 
+  if (buflen > MAXPATHLEN)
     buflen = MAXPATHLEN;
   strncpy(rbuf, buf, buflen - 1);
   rbuf[MAXPATHLEN - 1] = '\0';
 
-  /* resolve links and relative paths */
+  /* resolve links and relative paths (Unix) */
   if (rbuf[0] == '/' || rbuf[0] == '.') {
 #ifdef HAVE_REALPATH
     char rpbuf[MAXPATHLEN] = {0};
@@ -182,27 +185,51 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
 #endif
   }
 
-  /* resolve via PATH */
-  if (rbuf[0] != '/' && rbuf[0] != '.') {
+  /* check if path is already absolute:
+   *   Unix:    starts with '/'
+   *   Windows: drive letter paths (e.g. C:\ or C:/)
+   */
+  is_absolute = IS_PATH_ABSOLUTE(rbuf);
+
+  /* try resolving via Windows SearchPath API */
+#ifdef HAVE_SEARCHPATHA
+  if (!is_absolute) {
+    char found[MAXPATHLEN] = {0};
+    char *file_part = NULL;
+    if (SearchPathA(NULL, rbuf, ".exe", MAXPATHLEN - 1, found, &file_part) > 0) {
+      strncpy(rbuf, found, MAXPATHLEN - 1);
+    }
+  }
+#endif
+
+  is_absolute = IS_PATH_ABSOLUTE(rbuf);
+
+  /* if still not absolute, resolve via PATH */
+  if (!is_absolute) {
     char *path_env = getenv("PATH");
     if (path_env) {
       char *path_dup = strdup(path_env);
-      char *dir = strtok(path_dup, ":");
-      while (dir) {
-        char full_path[MAXPATHLEN];
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir, rbuf);
-        if (access(full_path, X_OK) == 0) {
-          strncpy(rbuf, full_path, MAXPATHLEN - 1);
-          break;
+      if (path_dup) {
+        /* Unix: split on ':' and check each directory */
+#  ifdef HAVE_UNISTD_H
+        char *dir = strtok(path_dup, ":");
+        while (dir) {
+          char full_path[MAXPATHLEN] = {0};
+          snprintf(full_path, MAXPATHLEN - 1, "%s/%s", dir, rbuf);
+          if (access(full_path, X_OK) == 0) {
+            strncpy(rbuf, full_path, MAXPATHLEN - 1);
+            break;
+          }
+          dir = strtok(NULL, ":");
         }
-        dir = strtok(NULL, ":");
+#  endif /* HAVE_UNISTD_H */
+        free(path_dup);
       }
-      free(path_dup);
     }
   }
 
   /* copy full paths back to caller */
-  if (rbuf[0] == '/') {
+  if (IS_PATH_ABSOLUTE(rbuf)) {
     strncpy(buf, rbuf, buflen - 1);
     buf[buflen - 1] = '\0';
   }
