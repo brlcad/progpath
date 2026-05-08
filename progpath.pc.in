@@ -5,6 +5,6 @@ includedir=${prefix}/include
 
 Name: progpath
 Description: Library for getting initial paths for a running application
-Version: @PROJECT_VERSION@
+Version: @PROGPATH_PUBLIC_VERSION@
 Libs: -L${libdir} -lprogpath
 Cflags: -I${includedir}

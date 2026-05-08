@@ -32,8 +32,7 @@ extern "C" {
 #endif
 
 #include <stddef.h>
-
-#define PROGPATH_VERSION "1.0.0"
+#include "progpath_version.h"
 
 #ifndef PROGPATH_EXPORT
 #  if defined(_WIN32) || defined(__CYGWIN__)

@@ -37,11 +37,18 @@ message(STATUS "Testing for program name facilities: ${PP_CFLAGS}")
 
 check_prog_path(CFLAGS "${PP_CFLAGS}")
 
+set(PROGPATH_PUBLIC_VERSION "${PROJECT_VERSION}" CACHE STRING
+  "Public version string exposed by progpath headers and package metadata")
+
+configure_file(
+  "${PROJECT_SOURCE_DIR}/progpath_version.h.in"
+  "${PROJECT_BINARY_DIR}/progpath_version.h"
+  @ONLY
+  )
 configure_file(
   "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
   "${PROJECT_BINARY_DIR}/progpath_config.h"
   )
-include_directories("${PROJECT_BINARY_DIR}")
 
 # cross-reference HAVE_* symbols across config template, cmake checks,
 # and source code — warns at configure time if any are inconsistent
@@ -58,6 +65,7 @@ add_library(progpath-static STATIC progpath.h;progpath.cpp)
 target_compile_options(progpath-static PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath-static PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -67,6 +75,7 @@ set_target_properties(progpath PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBIL
 target_compile_options(progpath PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -92,7 +101,11 @@ install(TARGETS progpath progpath-static
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(FILES progpath.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES
+    progpath.h
+    "${CMAKE_CURRENT_BINARY_DIR}/progpath_version.h"
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
 install(EXPORT progpathTargets
     FILE progpathTargets.cmake
@@ -122,6 +135,13 @@ install(FILES
 configure_file(progpath.pc.in progpath.pc @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/progpath.pc"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
+install(FILES
+    README.md
+    CHANGELOG.md
+    INTEGRATION.md
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 
 ###
