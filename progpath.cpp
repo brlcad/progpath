@@ -205,6 +205,20 @@ static int is_path_absolute(const char *path) {
 }
 
 
+static int path_has_separator(const char *path) {
+  if (!path)
+    return 0;
+
+  while (*path) {
+    if (*path == '/' || *path == '\\')
+      return 1;
+    path++;
+  }
+
+  return 0;
+}
+
+
 /* this function expands a given path, only modifying 'buf' with the
  * full path if it appears to have succeeded.
  */
@@ -220,8 +234,11 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   strncpy(rbuf, buf, buflen - 1);
   rbuf[MAXPATHLEN - 1] = '\0';
 
-  /* resolve links and relative paths (Unix) */
-  if (rbuf[0] == '/' || rbuf[0] == '.') {
+  /* Explicit relative paths such as ./prog, ../prog, or subdir/prog
+   * should resolve relative to the process working directory rather
+   * than falling through to PATH search.
+   */
+  if (is_path_absolute(rbuf) || rbuf[0] == '.' || path_has_separator(rbuf)) {
 #ifdef HAVE_REALPATH
     char rpbuf[MAXPATHLEN] = {0};
     if (realpath(rbuf, rpbuf)) {
