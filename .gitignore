@@ -1,0 +1,7 @@
+.build/
+build/
+build_*/
+cmake-build-*/
+inst/
+install/
+compile_commands.json
