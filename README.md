@@ -51,7 +51,7 @@ After `cmake --install`, consumers can use either:
 - CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath` or `progpath::progpath-static`
 - pkg-config: `pkg-config --cflags --libs progpath`
 
-Detailed consumer notes live in [docs/INTEGRATION.md](docs/INTEGRATION.md).  `make install`
+Detailed consumer notes live in [INTEGRATION.md](INTEGRATION.md).  `make install`
 also installs that file and this README into the package documentation directory.
 
 ## Initialization
