@@ -18,9 +18,9 @@ Please include:
 ## Building and Testing
 
 ```bash
-mkdir build && cd build
-cmake .. && cmake --build .
-ctest --output-on-failure
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
 ```
 
 ## Adding Support for New Platforms
