@@ -37,12 +37,9 @@ message(STATUS "Testing for program name facilities: ${PP_CFLAGS}")
 
 check_prog_path(CFLAGS "${PP_CFLAGS}")
 
-set(PROGPATH_PUBLIC_VERSION "${PROJECT_VERSION}" CACHE STRING
-  "Public version string exposed by progpath headers and package metadata")
-
 configure_file(
-  "${PROJECT_SOURCE_DIR}/progpath_version.h.in"
-  "${PROJECT_BINARY_DIR}/progpath_version.h"
+  "${PROJECT_SOURCE_DIR}/progpath.h.in"
+  "${PROJECT_BINARY_DIR}/progpath.h"
   @ONLY
   )
 configure_file(
@@ -61,7 +58,10 @@ validate_config_symbols(
 ###
 # main progpath library, compiled static and dynamic
 ###
-add_library(progpath-static STATIC progpath.h;progpath.cpp)
+add_library(progpath-static STATIC
+  "${PROJECT_BINARY_DIR}/progpath.h"
+  progpath.cpp
+)
 target_compile_options(progpath-static PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath-static PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -69,7 +69,10 @@ target_include_directories(progpath-static PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-add_library(progpath SHARED progpath.h;progpath.cpp)
+add_library(progpath SHARED
+  "${PROJECT_BINARY_DIR}/progpath.h"
+  progpath.cpp
+)
 target_compile_definitions(progpath PRIVATE PROGPATH_EXPORTS)
 set_target_properties(progpath PROPERTIES C_VISIBILITY_PRESET hidden CXX_VISIBILITY_PRESET hidden)
 target_compile_options(progpath PRIVATE ${PP_CFLAGS})
@@ -102,8 +105,7 @@ install(TARGETS progpath progpath-static
 )
 
 install(FILES
-    progpath.h
-    "${CMAKE_CURRENT_BINARY_DIR}/progpath_version.h"
+    "${CMAKE_CURRENT_BINARY_DIR}/progpath.h"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
