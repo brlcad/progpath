@@ -36,6 +36,6 @@ add_test(NAME progpath_bin_output
     $<TARGET_FILE:progpath-bin>
 )
 set_tests_properties(progpath_bin_output PROPERTIES
-  PASS_REGULAR_EXPRESSION "Program executable is \\[ /"
+  PASS_REGULAR_EXPRESSION "Program executable is \\[ ([A-Za-z]:\\\\|/)"
   FAIL_REGULAR_EXPRESSION  "ERROR:"
 )
