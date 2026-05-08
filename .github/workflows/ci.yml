@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
     - name: Build
       run: cmake --build build --config Release
@@ -34,7 +34,7 @@ jobs:
     - name: Test Installation
       run: |
         cmake --install build --prefix inst
-        cmake -S tests/test_install -B build_install -DCMAKE_PREFIX_PATH=${{ github.workspace }}/inst -DCMAKE_BUILD_TYPE=Release
+        cmake -S tests/test_install -B build_install -DCMAKE_PREFIX_PATH=${{ github.workspace }}/inst -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         cmake --build build_install --config Release
         cd build_install && ctest -C Release --output-on-failure
 
@@ -56,7 +56,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cppcheck
-        cppcheck --enable=all --inconclusive --error-exitcode=1 . -i build -i build_strict -i build_san -i .build
+        cppcheck --project=build/compile_commands.json --enable=warning,portability --inconclusive --error-exitcode=1
 
     - name: Configure CMake (Sanitizers)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'

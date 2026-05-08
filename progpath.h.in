@@ -40,7 +40,9 @@ extern "C" {
 
 #ifndef PROGPATH_EXPORT
 #  if defined(_WIN32) || defined(__CYGWIN__)
-#    if defined(PROGPATH_EXPORTS)
+#    if defined(PROGPATH_STATIC)
+#      define PROGPATH_EXPORT
+#    elif defined(PROGPATH_EXPORTS)
 #      define PROGPATH_EXPORT __declspec(dllexport)
 #    else
 #      define PROGPATH_EXPORT __declspec(dllimport)

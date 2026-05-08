@@ -18,8 +18,8 @@
 #include <string.h>
 
 #ifdef _WIN32
+#  include <io.h> /* _access */
 #  include <windows.h>
-#  include <io.h>      /* _access */
 #  define F_OK 0
 #  define access _access
 #else
@@ -30,11 +30,23 @@
 #define BUFSIZE 4096
 
 static int failures = 0;
-static int passes   = 0;
+static int passes = 0;
 
-#define PASS(msg) do { printf("PASS: %s\n", (msg)); passes++;   } while (0)
-#define FAIL(msg) do { fprintf(stderr, "FAIL: %s\n", (msg)); failures++; } while (0)
-#define FAILF(fmt, ...) do { fprintf(stderr, "FAIL: " fmt "\n", __VA_ARGS__); failures++; } while (0)
+#define PASS(msg)                \
+  do {                           \
+    printf("PASS: %s\n", (msg)); \
+    passes++;                    \
+  } while (0)
+#define FAIL(msg)                         \
+  do {                                    \
+    fprintf(stderr, "FAIL: %s\n", (msg)); \
+    failures++;                           \
+  } while (0)
+#define FAILF(fmt, ...)                              \
+  do {                                               \
+    fprintf(stderr, "FAIL: " fmt "\n", __VA_ARGS__); \
+    failures++;                                      \
+  } while (0)
 
 /* Returns 1 if 'path' looks like an absolute path on this platform. */
 static int is_absolute(const char *path) {
@@ -143,7 +155,6 @@ int main(void) {
       printf("SKIP: /proc readlink not available on this system\n");
     }
   }
-
 
 test_ipwd:
   /* ------------------------------------------------------------------ */

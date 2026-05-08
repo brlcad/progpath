@@ -30,6 +30,10 @@
 /* use any method at our disposal */
 #define _GNU_SOURCE 1
 
+#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#  define _CRT_SECURE_NO_WARNINGS 1
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -73,6 +77,9 @@
 #ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
 #endif
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
 #ifdef HAVE_LIBPROC_H /* for proc_pidpath */
 #  include <libproc.h>
 #endif
@@ -86,7 +93,6 @@
 #  include <process.h>
 #endif
 #ifdef HAVE_WINDOWS_H
-#  define _CRT_SECURE_NO_WARNINGS
 #  include <windows.h>
 #  define chdir _chdir
 #  define getcwd _getcwd
@@ -114,20 +120,19 @@
  */
 extern "C" {
 #ifndef HAVE_DECL_GETPROGNAME
-  extern const char *getprogname(void);
+extern const char *getprogname(void);
 #endif
 #ifndef HAVE_DECL_GETEXECNAME
-  extern const char *getexecname(void);
+extern const char *getexecname(void);
 #endif
 #ifndef HAVE_DECL_PROC_PIDPATH
-  /* proc_pidpath returns int (errno on failure, 0 on success) */
-  extern int proc_pidpath(int, void *, uint32_t);
+/* proc_pidpath returns int (errno on failure, 0 on success) */
+extern int proc_pidpath(int, void *, uint32_t);
 #endif
-#ifndef HAVE_DECL_CHDIR
-  extern int chdir(const char *);
+#if !defined(HAVE_DECL_CHDIR) && !defined(HAVE_WINDOWS_H)
+extern int chdir(const char *);
 #endif
 }
-
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
@@ -147,14 +152,12 @@ struct method {
   int debug;
 };
 
-
 /* debug states encoded as bits */
 enum {
   PP_DEFAULT = 0,      /* default: no debugging */
   PP_PRINT = 1 << 0,   /* print debugging */
   PP_CONTINUE = 1 << 1 /* try all methods */
 };
-
 
 /* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
  * print useful debugging lines for methods that have results.
@@ -167,7 +170,6 @@ static int pp_get_debug(void) {
   return env ? atoi(env) : 0;
 }
 
-
 static void pp_print(const char *fmt, ...) {
   va_list args;
   if (!(pp_get_debug() & PP_PRINT))
@@ -178,11 +180,9 @@ static void pp_print(const char *fmt, ...) {
   va_end(args);
 }
 
-
 static void print_method(struct method m, const char *result) {
   pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
-
 
 /* reports if a given path looks absolute on this platform */
 static int is_path_absolute(const char *path) {
@@ -204,7 +204,6 @@ static int is_path_absolute(const char *path) {
   return 0;
 }
 
-
 static int path_has_separator(const char *path) {
   if (!path)
     return 0;
@@ -217,7 +216,6 @@ static int path_has_separator(const char *path) {
 
   return 0;
 }
-
 
 /* this function expands a given path, only modifying 'buf' with the
  * full path if it appears to have succeeded.
@@ -266,7 +264,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
       char *path_dup = strdup(path_env);
       if (path_dup) {
         /* Unix: split on ':' and check each directory */
-#  ifdef HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
         char *dir = strtok(path_dup, ":");
         while (dir) {
           char full_path[MAXPATHLEN] = {0};
@@ -281,7 +279,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
           }
           dir = strtok(NULL, ":");
         }
-#  endif /* HAVE_UNISTD_H */
+#endif /* HAVE_UNISTD_H */
         free(path_dup);
       }
     }
@@ -293,7 +291,6 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
     buf[buflen - 1] = '\0';
   }
 }
-
 
 /* perform operations common to every method.  given a final output
  * buffer and an optional 'result' path, expand it to a full path,
@@ -314,7 +311,6 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
   resolve_to_full_path(buf, buflen);
   print_method(m, buf);
 }
-
 
 /* cheeky function checks whather we seem to have a full 'path',
  * writing a full path to the 'buf' output buffer or dynamically
@@ -350,7 +346,6 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
 
   return 0;
 }
-
 
 /* obtain the current working directory.  not currently exposed as
  * public API, but could be convinced to make it public if enough
@@ -423,7 +418,6 @@ static char *progcwd(char *buf, size_t buflen) {
   return NULL;
 }
 
-
 static void chdir_if_diff(const char *wd) {
   char cwd[MAXPATHLEN] = {0};
   int ret;
@@ -442,7 +436,6 @@ static void chdir_if_diff(const char *wd) {
     perror("chdir");
   }
 }
-
 
 char *progipwd(char *buf, size_t buflen) {
 
@@ -496,7 +489,6 @@ char *progipwd(char *buf, size_t buflen) {
     return buf;
   return NULL;
 }
-
 
 char *progpath(char *buf, size_t buflen) {
 
@@ -1174,14 +1166,12 @@ char *progpath(char *buf, size_t buflen) {
   return NULL;
 }
 
-
 void proginit(void) {
   if (progpath_ipwd[0] != '\0')
     return;
 
   progipwd(progpath_ipwd, MAXPATHLEN);
 }
-
 
 struct progpath_initializer {
   /* constructor */
@@ -1192,6 +1182,5 @@ struct progpath_initializer {
   ~progpath_initializer() {
   }
 };
-
 
 static progpath_initializer pp;

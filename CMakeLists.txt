@@ -62,6 +62,7 @@ add_library(progpath-static STATIC
   "${PROJECT_BINARY_DIR}/progpath.h"
   progpath.cpp
 )
+target_compile_definitions(progpath-static PUBLIC PROGPATH_STATIC)
 target_compile_options(progpath-static PRIVATE ${PP_CFLAGS})
 target_include_directories(progpath-static PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
