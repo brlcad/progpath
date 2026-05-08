@@ -29,12 +29,30 @@ that code is included and compiled by default, so can see it in action:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
-     % mkdir .build && cd .build && cmake .. && make  # creates 'progpath'
-     % cd ../..  # change dir just for fun, then run 'progpath' binary
-     % progpath/.build/progpath
-     Program executable is [ /Users/morrison/progpath/.build/progpath ]
+     % cmake -S . -B build && cmake --build build
+     % cd ..  # change dir just for fun, then run 'progpath' binary
+     % progpath/build/progpath
+     Program executable is [ /Users/morrison/progpath/build/progpath ]
     Initial working dir is [ /Users/morrison ]
 ```
+
+## Build
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+## Integrate
+
+After `cmake --install`, consumers can use either:
+
+- CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath` or `progpath::progpath-static`
+- pkg-config: `pkg-config --cflags --libs progpath`
+
+Detailed consumer notes live in [docs/INTEGRATION.md](docs/INTEGRATION.md).  `make install`
+also installs that file and this README into the package documentation directory.
 
 ## Initialization
 
