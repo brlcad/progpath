@@ -132,6 +132,7 @@ int main(void) {
   }
 
   /* 4. Cross-reference with /proc/self/exe where available */
+#ifndef _WIN32
   {
     char procpath[BUFSIZE] = {0};
     ssize_t len = 0;
@@ -155,6 +156,9 @@ int main(void) {
       printf("SKIP: /proc readlink not available on this system\n");
     }
   }
+#else
+  printf("SKIP: /proc readlink not available on this system\n");
+#endif
 
 test_ipwd:
   /* ------------------------------------------------------------------ */

@@ -112,9 +112,6 @@
 #  include <ctype.h> /* for isalpha */
 #endif
 
-/* helper to simplify initialization */
-#define METHOD(x) {method++, __LINE__, (x), debug}
-
 /* Declare funcs without requiring they be available in system
  * headers without the right includes.
  */
@@ -151,6 +148,15 @@ struct method {
   const char *label;
   int debug;
 };
+
+static struct method
+make_method(int *id, int line, const char *label, int debug) {
+  struct method m = {(*id)++, line, label, debug};
+  return m;
+}
+
+/* helper to simplify initialization */
+#define METHOD(x) make_method(&method, __LINE__, (x), debug)
 
 /* debug states encoded as bits */
 enum {
