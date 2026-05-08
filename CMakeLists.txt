@@ -139,6 +139,15 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/progpath.pc"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
+# GNUInstallDirs defines a portable man directory when the platform
+# uses one.  Keep the install rule simple and data-only so it remains
+# harmless on platforms where man pages are less common.
+if (DEFINED CMAKE_INSTALL_MANDIR AND NOT CMAKE_INSTALL_MANDIR STREQUAL "")
+  install(FILES progpath.3
+      DESTINATION "${CMAKE_INSTALL_MANDIR}/man3"
+  )
+endif ()
+
 install(FILES
     README.md
     CHANGELOG.md

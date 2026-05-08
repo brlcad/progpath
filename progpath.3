@@ -1,0 +1,96 @@
+.TH PROGPATH 3 "" "progpath" "Library Functions Manual"
+.SH NAME
+progpath, progipwd \- get an executable path and initial working directory
+.SH SYNOPSIS
+.nf
+.B #include <progpath.h>
+.PP
+.BI "char *progpath(char *" buf ", size_t " len );
+.BI "char *progipwd(char *" buf ", size_t " len );
+.fi
+.SH DESCRIPTION
+.B progpath()
+returns the path to the running program's executable image.
+.PP
+.B progipwd()
+returns the process working directory as it was when the program started,
+so it remains available even after later calls to
+.BR chdir (2).
+.PP
+If
+.I buf
+is not
+.BR NULL ,
+the result is written into the caller-supplied buffer and the return value is
+.IR buf .
+At most
+.I len \- 1
+bytes are written so the result remains NUL-terminated.
+.PP
+If
+.I buf
+is
+.BR NULL ,
+memory is allocated with
+.BR calloc (3)
+and the caller must release it with
+.BR free (3).
+.SH INITIALIZATION
+.B progpath
+captures the initial working directory once, as early as possible.
+How that happens depends on how the library is linked:
+.TP
+Shared library
+Initialization happens automatically before
+.BR main .
+.TP
+Static library linked from C++
+Initialization also happens automatically before
+.BR main .
+.TP
+Static library linked from pure C
+Initialization is lazy.
+Call
+.B progipwd()
+or
+.B progpath()
+early in
+.BR main ,
+before any explicit
+.B chdir()
+call.
+.SH RETURN VALUE
+On success,
+.B progpath()
+and
+.B progipwd()
+return a pointer to the resulting string.
+This is either the caller-provided buffer or a dynamically allocated buffer.
+On failure,
+.B NULL
+is returned.
+.SH THREAD SAFETY
+Do not call
+.B progpath()
+or
+.B progipwd()
+concurrently before the initial capture has completed.
+Initialize from the main thread before creating additional threads.
+.PP
+Some lookup methods may temporarily restore the initial working directory while
+resolving a full executable path.
+Treat the API as not thread-safe with respect to concurrent directory changes.
+.SH EXAMPLE
+.nf
+char pp[4096];
+char *ipwd;
+
+progpath(pp, sizeof(pp));
+ipwd = progipwd(NULL, 0);
+free(ipwd);
+.fi
+.SH SEE ALSO
+.BR chdir (2),
+.BR getcwd (3),
+.BR realpath (3),
+.BR free (3)

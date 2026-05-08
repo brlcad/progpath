@@ -38,4 +38,5 @@ and link either `progpath` or `progpath-static`.
 ## Installed docs
 
 `make install` also installs this file and `README.md` into the platform's
-standard documentation directory for the package.
+standard documentation directory for the package, along with a `progpath(3)`
+man page when the platform defines a manpage install directory.

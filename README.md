@@ -52,7 +52,7 @@ After `cmake --install`, consumers can use either:
 - pkg-config: `pkg-config --cflags --libs progpath`
 
 Detailed consumer notes live in [INTEGRATION.md](INTEGRATION.md).  `make install`
-also installs that file and this README into the package documentation directory.
+also installs that file, this README, and a `progpath(3)` man page.
 
 ## Initialization
 
