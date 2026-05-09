@@ -13,7 +13,9 @@ other efforts implement similar functionality, but where progpath differs is:
 4. ease adding new methods, and
 5. works after changing dirs!
 
-example usage:
+## Example
+
+this example is included and compiled as a 'progpath' binary:
 
 ```C
     #include "progpath.h"
@@ -33,26 +35,22 @@ example usage:
     }
 ```
 
-that code is included and compiled by default, so can see it in action:
+## Build
+
+compile the 'progpath' example to see it in action:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
      % cmake -S . -B build && cmake --build build
+     % # ctest --test-dir build --output-on-failure  # optional: run tests
+
      % cd ..  # change dir just for fun, then run 'progpath' binary
      % progpath/build/progpath
      Program executable is [ /Users/morrison/progpath/build/progpath ]
     Initial working dir is [ /Users/morrison ]
 ```
 
-## Build
-
-```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-## Integrate
+## Integrate into Another Code
 
 after `cmake --install`, callers can use either:
 
@@ -84,7 +82,7 @@ you find an environment that doesn't work!
 
 ## Platform CI Status Matrix
 
-following environments are continuously tested. badges reflect the current status of the `test.yml` workflow for each specific platform.
+following environments are continuously tested; badges reflect current status for each specific platform:
 
 | OS Group | Environment | Architecture | Status |
 |---|---|---|---|
