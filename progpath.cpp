@@ -155,6 +155,7 @@ make_method(int *id, int line, const char *label, int debug) {
   return m;
 }
 
+
 /* helper to simplify initialization */
 #define METHOD(x) make_method(&method, __LINE__, (x), debug)
 
@@ -176,6 +177,7 @@ static int pp_get_debug(void) {
   return env ? atoi(env) : 0;
 }
 
+
 static void pp_print(const char *fmt, ...) {
   va_list args;
   if (!(pp_get_debug() & PP_PRINT))
@@ -186,9 +188,11 @@ static void pp_print(const char *fmt, ...) {
   va_end(args);
 }
 
+
 static void print_method(struct method m, const char *result) {
   pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
 }
+
 
 /* reports if a given path looks absolute on this platform */
 static int is_path_absolute(const char *path) {
@@ -210,6 +214,7 @@ static int is_path_absolute(const char *path) {
   return 0;
 }
 
+
 static int path_has_separator(const char *path) {
   if (!path)
     return 0;
@@ -222,6 +227,7 @@ static int path_has_separator(const char *path) {
 
   return 0;
 }
+
 
 /* this function expands a given path, only modifying 'buf' with the
  * full path if it appears to have succeeded.
@@ -298,6 +304,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 }
 
+
 /* perform operations common to every method.  given a final output
  * buffer and an optional 'result' path, expand it to a full path,
  * printing debugging lines before and after expansion if enabled.
@@ -317,6 +324,7 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
   resolve_to_full_path(buf, buflen);
   print_method(m, buf);
 }
+
 
 /* cheeky function checks whather we seem to have a full 'path',
  * writing a full path to the 'buf' output buffer or dynamically
@@ -352,6 +360,7 @@ static int we_done_yet(struct method m, char **buf, size_t buflen, const char *p
 
   return 0;
 }
+
 
 /* obtain the current working directory.  not currently exposed as
  * public API, but could be convinced to make it public if enough
@@ -424,6 +433,7 @@ static char *progcwd(char *buf, size_t buflen) {
   return NULL;
 }
 
+
 static void chdir_if_diff(const char *wd) {
   char cwd[MAXPATHLEN] = {0};
   int ret;
@@ -442,6 +452,7 @@ static void chdir_if_diff(const char *wd) {
     perror("chdir");
   }
 }
+
 
 char *progipwd(char *buf, size_t buflen) {
 
@@ -495,6 +506,7 @@ char *progipwd(char *buf, size_t buflen) {
     return buf;
   return NULL;
 }
+
 
 char *progpath(char *buf, size_t buflen) {
 
@@ -1172,12 +1184,14 @@ char *progpath(char *buf, size_t buflen) {
   return NULL;
 }
 
+
 void proginit(void) {
   if (progpath_ipwd[0] != '\0')
     return;
 
   progipwd(progpath_ipwd, MAXPATHLEN);
 }
+
 
 struct progpath_initializer {
   /* constructor */
