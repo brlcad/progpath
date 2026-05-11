@@ -31,6 +31,14 @@ else ()
   list(APPEND PP_CFLAGS ${PP_CFLAGS_NOT_MSVC})
 endif ()
 
+# MSVC warns on standard CRT entry points such as getenv(), strncpy(),
+# fopen(), and _open() unless the secure-CRT opt-out is defined before
+# compilation.  Set it once here so it applies uniformly to the library
+# and test targets without introducing source-level platform branches.
+if (MSVC)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
+endif ()
+
 include(CheckProgPath)
 
 message(STATUS "Testing for program name facilities: ${PP_CFLAGS}")

@@ -30,10 +30,6 @@
 /* use any method at our disposal */
 #define _GNU_SOURCE 1
 
-#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
-#  define _CRT_SECURE_NO_WARNINGS 1
-#endif
-
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
