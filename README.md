@@ -37,13 +37,11 @@ this example is included and compiled as a 'progpath' binary:
 
 ## Build
 
-compile the 'progpath' example to see it in action:
+compile to see the example in action:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
      % cmake -S . -B build && cmake --build build
-     % # ctest --test-dir build --output-on-failure  # optional: run tests
-
      % cd ..  # change dir just for fun, then run 'progpath' binary
      % progpath/build/progpath
      Program executable is [ /Users/morrison/progpath/build/progpath ]
@@ -52,19 +50,18 @@ compile the 'progpath' example to see it in action:
 
 ## Integrate into Another Code
 
-after `cmake --install`, callers can use either:
+after `cmake --install`, callers can use:
 
-- CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath` or `progpath::progpath-static`
-- pkg-config: `pkg-config --cflags --libs progpath`
+- CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath`
 
-more detailed integration notes are in [INTEGRATION.md](INTEGRATION.md).  `make install`
-also installs that file, this README, and a `progpath(3)` man page.
+of find more detailed notes and other options in [INTEGRATION.md](INTEGRATION.md).
 
 ## Initialization
 
-progpath captures the initial working directory (ipwd) once, as early as
-possible, so `progipwd()` returns it correctly even after `chdir()`.  how
-that capture happens depends on how you link the library:
+progpath captures the initial working directory (ipwd) once, as early
+as possible, so `progipwd()` can return it correctly even after
+`chdir()`.  how that capture happens depends on how you link the
+library:
 
 | Linking mode | Init behavior |
 |---|---|
@@ -72,13 +69,14 @@ that capture happens depends on how you link the library:
 | Static lib, linked from **C++** | **Automatic** — C++ runtime fires the constructor. |
 | Static lib, linked from **pure C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`. Call either early, before any `chdir()`.|
 
-thread safety: do not call progpath/progipwd concurrently before
-first capture completes.  Init from main thread before spawning
-other threads.
+thread safety: do not call progpath/progipwd concurrently before first
+capture completes.  Init from main thread before spawning other
+threads.
 
-progpath includes an example program for testing your environment, and should
-work everywhere.  [let me know](https://github.com/brlcad/progpath/issues) if
-you find an environment that doesn't work!
+progpath is library API but includes an example 'progpath' program for
+testing that should work everywhere.  [let me
+know](https://github.com/brlcad/progpath/issues) if you find an
+environment that doesn't work!
 
 ## Platform CI Status Matrix
 
