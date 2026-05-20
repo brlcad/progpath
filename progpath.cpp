@@ -73,7 +73,10 @@
 #ifdef HAVE_FINDDIRECTORY_H
 #  include <FindDirectory.h>
 #endif
-#ifdef HAVE_LIBPROC_H /* for proc_pidpath */
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
+#if defined(HAVE_LIBPROC_H) && defined(HAVE_DECL_PROC_PIDPATH) /* macOS libproc.h for proc_pidpath */
 #  include <libproc.h>
 #endif
 #ifdef HAVE_UNISTD_H
@@ -86,7 +89,6 @@
 #  include <process.h>
 #endif
 #ifdef HAVE_WINDOWS_H
-#  define _CRT_SECURE_NO_WARNINGS
 #  include <windows.h>
 #  define chdir _chdir
 #  define getcwd _getcwd
@@ -106,28 +108,24 @@
 #  include <ctype.h> /* for isalpha */
 #endif
 
-/* helper to simplify initialization */
-#define METHOD(x) {method++, __LINE__, (x), debug}
-
 /* Declare funcs without requiring they be available in system
  * headers without the right includes.
  */
 extern "C" {
 #ifndef HAVE_DECL_GETPROGNAME
-  extern const char *getprogname(void);
+extern const char *getprogname(void);
 #endif
 #ifndef HAVE_DECL_GETEXECNAME
-  extern const char *getexecname(void);
+extern const char *getexecname(void);
 #endif
 #ifndef HAVE_DECL_PROC_PIDPATH
-  /* proc_pidpath returns int (errno on failure, 0 on success) */
-  extern int proc_pidpath(int, void *, uint32_t);
+/* proc_pidpath returns int (errno on failure, 0 on success) */
+extern int proc_pidpath(int, void *, uint32_t);
 #endif
-#ifndef HAVE_DECL_CHDIR
-  extern int chdir(const char *);
+#if !defined(HAVE_DECL_CHDIR) && !defined(HAVE_WINDOWS_H)
+extern int chdir(const char *);
 #endif
 }
-
 
 #ifndef MAXPATHLEN
 #  ifdef PATH_MAX
@@ -147,6 +145,15 @@ struct method {
   int debug;
 };
 
+static struct method
+make_method(int *id, int line, const char *label, int debug) {
+  struct method m = {(*id)++, line, label, debug};
+  return m;
+}
+
+
+/* helper to simplify initialization */
+#define METHOD(x) make_method(&method, __LINE__, (x), debug)
 
 /* debug states encoded as bits */
 enum {
@@ -154,7 +161,6 @@ enum {
   PP_PRINT = 1 << 0,   /* print debugging */
   PP_CONTINUE = 1 << 1 /* try all methods */
 };
-
 
 /* PROGPATH_DEBUG=1 environment variable can be set in caller scope to
  * print useful debugging lines for methods that have results.
@@ -266,7 +272,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
       char *path_dup = strdup(path_env);
       if (path_dup) {
         /* Unix: split on ':' and check each directory */
-#  ifdef HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
         char *dir = strtok(path_dup, ":");
         while (dir) {
           char full_path[MAXPATHLEN] = {0};
@@ -281,7 +287,7 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
           }
           dir = strtok(NULL, ":");
         }
-#  endif /* HAVE_UNISTD_H */
+#endif /* HAVE_UNISTD_H */
         free(path_dup);
       }
     }
@@ -375,7 +381,7 @@ static char *progcwd(char *buf, size_t buflen) {
   }
 #endif
 
-#ifdef HAVE__GETCWD
+#if defined(HAVE__GETCWD) && defined(HAVE_DIRECT_H)
   {
     char cwd[MAXPATHLEN] = {0};
     char mbuf[MAXPATHLEN] = {0};
@@ -706,9 +712,13 @@ char *progpath(char *buf, size_t buflen) {
   {
     char mbuf[MAXPATHLEN] = {0};
     size_t len = MAXPATHLEN - 1;
-    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME};
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_PATHNAME};
     struct method m = METHOD("sysctl(KERN_PROC_ARGS)");
-    sysctl(mib, 4, mbuf, &len, NULL, 0);
+    if (sysctl(mib, 4, mbuf, &len, NULL, 0) == 0) {
+      if (len >= MAXPATHLEN)
+        len = MAXPATHLEN - 1;
+      mbuf[len] = '\0';
+    }
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -763,7 +773,11 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
   /* verified, relative: OpenBSD */
-#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
+  /* NetBSD also exposes KERN_PROC_ARGV, but returns NUL-separated strings
+   * rather than OpenBSD's pointer array followed by strings layout.
+   * Restrict this block to the OpenBSD-style capability set.
+   */
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV) && !defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
     int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
@@ -1066,7 +1080,7 @@ char *progpath(char *buf, size_t buflen) {
     if (!main_fname) {
       Dl_info i;
       const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
-      if (mainfunc && dladdr(mainfunc, &i) && i.dli_fname) {
+      if (mainfunc && dladdr(const_cast<void *>(mainfunc), &i) && i.dli_fname) {
         main_fname = i.dli_fname;
       }
     }
@@ -1192,6 +1206,5 @@ struct progpath_initializer {
   ~progpath_initializer() {
   }
 };
-
 
 static progpath_initializer pp;

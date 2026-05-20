@@ -38,6 +38,23 @@ static int touch_file(const char *path) {
   return 0;
 }
 
+
+static int join_path(char *dst, size_t dst_size, const char *lhs, const char *rhs) {
+  size_t lhs_len = std::strlen(lhs);
+  size_t rhs_len = std::strlen(rhs);
+
+  if (lhs_len + 1 + rhs_len + 1 > dst_size) {
+    std::fprintf(stderr, "FAIL: path too long [%s/%s]\n", lhs, rhs);
+    return -1;
+  }
+
+  std::memcpy(dst, lhs, lhs_len);
+  dst[lhs_len] = '/';
+  std::memcpy(dst + lhs_len + 1, rhs, rhs_len + 1);
+  return 0;
+}
+
+
 int main() {
 #if !defined(HAVE_REALPATH) || !defined(HAVE_UNISTD_H)
   std::puts("SKIP: explicit relative-path hardening requires realpath() and POSIX PATH handling");
@@ -70,13 +87,14 @@ int main() {
     }
   }
 
-  std::snprintf(base_dir, sizeof(base_dir), "%s/%s", saved_cwd, "resolve_path_test");
-  std::snprintf(real_dir, sizeof(real_dir), "%s/%s", base_dir, "real");
-  std::snprintf(real_subdir, sizeof(real_subdir), "%s/%s", real_dir, "subdir");
-  std::snprintf(real_tool, sizeof(real_tool), "%s/%s", real_subdir, "tool");
-  std::snprintf(shadow_dir, sizeof(shadow_dir), "%s/%s", base_dir, "shadow");
-  std::snprintf(shadow_subdir, sizeof(shadow_subdir), "%s/%s", shadow_dir, "subdir");
-  std::snprintf(shadow_tool, sizeof(shadow_tool), "%s/%s", shadow_subdir, "tool");
+  if (join_path(base_dir, sizeof(base_dir), saved_cwd, "resolve_path_test") != 0 ||
+      join_path(real_dir, sizeof(real_dir), base_dir, "real") != 0 ||
+      join_path(real_subdir, sizeof(real_subdir), real_dir, "subdir") != 0 ||
+      join_path(real_tool, sizeof(real_tool), real_subdir, "tool") != 0 ||
+      join_path(shadow_dir, sizeof(shadow_dir), base_dir, "shadow") != 0 ||
+      join_path(shadow_subdir, sizeof(shadow_subdir), shadow_dir, "subdir") != 0 ||
+      join_path(shadow_tool, sizeof(shadow_tool), shadow_subdir, "tool") != 0)
+    goto cleanup;
 
   if (ensure_dir(base_dir) != 0 || ensure_dir(real_dir) != 0 || ensure_dir(real_subdir) != 0 ||
       ensure_dir(shadow_dir) != 0 || ensure_dir(shadow_subdir) != 0)

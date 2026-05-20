@@ -1,5 +1,5 @@
 # progpath
-[![CI](https://github.com/brlcad/progpath/actions/workflows/ci.yml/badge.svg)](https://github.com/brlcad/progpath/actions/workflows/ci.yml)
+[![Release Build and Install](https://github.com/brlcad/progpath/actions/workflows/release.yml/badge.svg)](https://github.com/brlcad/progpath/actions/workflows/release.yml)
 
 tiny C/C++ library for getting initial paths for a running application,
 encapsulating platform-specific details for getting a path to the running
@@ -84,25 +84,25 @@ following environments are continuously tested; badges reflect current status fo
 
 | OS Group | Environment | Architecture | Status |
 |---|---|---|---|
-| **Windows** | Windows Server 2019 | x86_64 | [![Windows 2019](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Windows%20%28windows-2019%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | Windows Server 2022 | x86_64 | [![Windows 2022](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Windows%20%28windows-2022%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| **macOS** | macOS 13 (Intel) | x86_64 | [![macOS 13](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=macOS%20%28macos-13%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | macOS 14 (Apple Silicon) | arm64 | [![macOS 14](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=macOS%20%28macos-14%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| **Linux** | Ubuntu (Latest) | x86_64 | [![Ubuntu](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28ubuntu-latest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | Alpine | x86_64 | [![Alpine](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28alpine%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | Fedora | x86_64 | [![Fedora](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28fedora%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | Debian | x86_64 | [![Debian](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28debian%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | Arch Linux | x86_64 | [![Arch](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28archlinux%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | AlmaLinux | x86_64 | [![AlmaLinux](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Linux%20%28almalinux%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| **BSD** | FreeBSD 15.0 (sysctl) | x86_64 | [![FreeBSD sysctl](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=BSD%20%28freebsd%2C%20no%20%2Fproc%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | FreeBSD 15.0 (procfs) | x86_64 | [![FreeBSD procfs](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=BSD%20%28freebsd%2C%20with%20%2Fproc%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | OpenBSD 7.8 | x86_64 / arm64 | [![OpenBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=BSD%20%28openbsd%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | NetBSD 10.1 | x86_64 / arm64 | [![NetBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=BSD%20%28netbsd%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | DragonFlyBSD 6.4.2 | x86_64 | [![DragonFlyBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=BSD%20%28dragonflybsd%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | MidnightBSD 4.0.4 | x86_64 | [![MidnightBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=MidnightBSD%20%284.0.4%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| **Illumos** | Solaris | x86_64 | [![Solaris](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Solaris&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| | OmniOS r151056 | x86_64 | [![OmniOS](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=OmniOS%20%28r151056%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
-| **Haiku** | Haiku r1beta5 | x86_64 | [![Haiku](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/test.yml?job=Haiku%20%28r1beta5%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/test.yml) |
+| **Windows** | Windows Server 2019 | x86_64 | [![Windows 2019](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Windows%20%28windows-2019%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | Windows Server 2022 | x86_64 | [![Windows 2022](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Windows%20%28windows-2022%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| **macOS** | macOS 13 (Intel) | x86_64 | [![macOS 13](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=macOS%20%28macos-13%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | macOS 14 (Apple Silicon) | arm64 | [![macOS 14](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=macOS%20%28macos-14%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| **Linux** | Ubuntu (Latest) | x86_64 | [![Ubuntu](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28ubuntu-latest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | Alpine | x86_64 | [![Alpine](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28alpine%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | Fedora | x86_64 | [![Fedora](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28fedora%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | Debian | x86_64 | [![Debian](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28debian%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | Arch Linux | x86_64 | [![Arch](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28archlinux%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | AlmaLinux | x86_64 | [![AlmaLinux](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Linux%20%28almalinux%3Alatest%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| **BSD** | FreeBSD 15.0 (sysctl) | x86_64 | [![FreeBSD sysctl](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=FreeBSD%20%28sysctl%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | FreeBSD 15.0 (procfs) | x86_64 | [![FreeBSD procfs](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=FreeBSD%20%28procfs%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | OpenBSD 7.8 | x86_64 / arm64 | [![OpenBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=OpenBSD&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | NetBSD 10.1 | x86_64 / arm64 | [![NetBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=NetBSD&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | DragonFlyBSD 6.4.2 | x86_64 | [![DragonFlyBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=DragonFlyBSD&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | MidnightBSD 4.0.4 | x86_64 | [![MidnightBSD](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=MidnightBSD%20%284.0.4%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| **Illumos** | Solaris | x86_64 | [![Solaris](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Solaris&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| | OmniOS r151056 | x86_64 | [![OmniOS](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=OmniOS%20%28r151056%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+| **Haiku** | Haiku r1beta5 | x86_64 | [![Haiku](https://img.shields.io/github/actions/workflow/status/brlcad/progpath/matrix.yml?job=Haiku%20%28r1beta5%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
 
 ---
 &copy; 2021-2026 Christopher Sean Morrison [@brlcad]

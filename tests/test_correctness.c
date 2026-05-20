@@ -12,29 +12,61 @@
  */
 
 #include "progpath.h"
+#include "progpath_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#  include <windows.h>
-#  include <io.h>      /* _access */
-#  define F_OK 0
-#  define access _access
-#else
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_IO_H
+#  include <io.h> /* _access */
+#endif
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
 #  include <unistd.h>
+#endif
+
+#ifdef HAVE_IO_H
+#  define access _access
+#endif
+
+#ifndef F_OK
+#  define F_OK 0
+#endif
+
+#ifndef S_ISDIR
+#  if defined(S_IFMT) && defined(S_IFDIR)
+#    define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#  elif defined(_S_IFDIR)
+#    define S_ISDIR(mode) (((mode) & _S_IFDIR) == _S_IFDIR)
+#  endif
 #endif
 
 #define BUFSIZE 4096
 
 static int failures = 0;
-static int passes   = 0;
+static int passes = 0;
 
-#define PASS(msg) do { printf("PASS: %s\n", (msg)); passes++;   } while (0)
-#define FAIL(msg) do { fprintf(stderr, "FAIL: %s\n", (msg)); failures++; } while (0)
-#define FAILF(fmt, ...) do { fprintf(stderr, "FAIL: " fmt "\n", __VA_ARGS__); failures++; } while (0)
+#define PASS(msg)                \
+  do {                           \
+    printf("PASS: %s\n", (msg)); \
+    passes++;                    \
+  } while (0)
+#define FAIL(msg)                         \
+  do {                                    \
+    fprintf(stderr, "FAIL: %s\n", (msg)); \
+    failures++;                           \
+  } while (0)
+#define FAILF(fmt, ...)                              \
+  do {                                               \
+    fprintf(stderr, "FAIL: " fmt "\n", __VA_ARGS__); \
+    failures++;                                      \
+  } while (0)
 
 /* Returns 1 if 'path' looks like an absolute path on this platform. */
 static int is_absolute(const char *path) {
@@ -56,18 +88,11 @@ static int path_exists(const char *path) {
   return access(path, F_OK) == 0;
 }
 
-#ifndef _WIN32
 /* Returns 1 if 'path' is a directory. */
 static int path_is_dir(const char *path) {
   struct stat st;
   return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
-#else
-static int path_is_dir(const char *path) {
-  DWORD attr = GetFileAttributesA(path);
-  return attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY);
-}
-#endif
 
 /* Returns the basename portion of 'path' (final component after last separator). */
 static const char *path_basename(const char *path) {
@@ -120,6 +145,7 @@ int main(void) {
   }
 
   /* 4. Cross-reference with /proc/self/exe where available */
+#ifdef HAVE_READLINK
   {
     char procpath[BUFSIZE] = {0};
     ssize_t len = 0;
@@ -143,7 +169,9 @@ int main(void) {
       printf("SKIP: /proc readlink not available on this system\n");
     }
   }
-
+#else
+  printf("SKIP: /proc readlink not available on this system\n");
+#endif
 
 test_ipwd:
   /* ------------------------------------------------------------------ */

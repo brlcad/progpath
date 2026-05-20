@@ -21,6 +21,7 @@ target_include_directories(test_correctness PRIVATE ${PROJECT_SOURCE_DIR})
 add_test(NAME test_correctness COMMAND test_correctness)
 
 add_executable(test_resolve_path test_resolve_path.cpp)
+target_compile_definitions(test_resolve_path PRIVATE PROGPATH_STATIC)
 target_include_directories(test_resolve_path PRIVATE
   ${PROJECT_SOURCE_DIR}
   ${PROJECT_BINARY_DIR}
@@ -35,6 +36,6 @@ add_test(NAME progpath_bin_output
     $<TARGET_FILE:progpath-bin>
 )
 set_tests_properties(progpath_bin_output PROPERTIES
-  PASS_REGULAR_EXPRESSION "Program executable is \\[ /"
+  PASS_REGULAR_EXPRESSION "Program executable is \\[ ([A-Za-z]:\\\\|/)"
   FAIL_REGULAR_EXPRESSION  "ERROR:"
 )

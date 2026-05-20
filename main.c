@@ -6,7 +6,7 @@
 
 /* platform symbols only to prove progpath_config.h is not required */
 #ifdef _WIN32
-#  include <windows.h> /* for _chdir */
+#  include <direct.h> /* for _chdir */
 #  define chdir _chdir
 #else
 #  include <unistd.h> /* for chdir */

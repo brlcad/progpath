@@ -21,6 +21,7 @@ target_link_libraries(myapp PRIVATE progpath::progpath)
 ```
 
 Use `progpath::progpath-static` if you specifically want the static target.
+On Windows, that target automatically adds `PROGPATH_STATIC` for consumers.
 
 ## pkg-config
 
@@ -34,6 +35,8 @@ pkg-config --cflags --libs progpath
 
 If you bundle the source directly, add the project with `add_subdirectory(...)`
 and link either `progpath` or `progpath-static`.
+If you instead compile `progpath.cpp` directly into a Windows static build,
+define `PROGPATH_STATIC` for that target before including `progpath.h`.
 
 ## Installed docs
 

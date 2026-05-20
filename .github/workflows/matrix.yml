@@ -1,0 +1,301 @@
+name: Full Multi-Platform Matrix
+
+on: [push, pull_request]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # show path method debug output on any test failure
+  PROGPATH_DEBUG: 3
+
+jobs:
+  # 1. WINDOWS (x64)
+  windows-suite:
+    name: Windows (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+      # os: [windows-2019, windows-2022]
+        os: [windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build --config Debug
+      - name: Test
+        working-directory: build
+        run: ctest -C Debug --output-on-failure
+
+  # 2. MACOS (Intel & Apple Silicon)
+  macos-suite:
+    name: macOS (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [macos-13, macos-14]
+        os: [macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build --config Debug
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
+
+  # 3. LINUX DISTROS (Docker-based)
+  linux-distros:
+    name: Linux (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu
+            image: ubuntu:latest
+            install: apt-get update -q && apt-get install -y cmake build-essential
+          - name: Debian
+            image: debian:stable
+            install: apt-get update -q && apt-get install -y cmake build-essential
+          - name: Fedora
+            image: fedora:latest
+            install: dnf install -y cmake gcc gcc-c++ make
+          - name: openSUSE
+            image: registry.opensuse.org/opensuse/distrobox-packaging:latest
+            install: zypper install -y cmake gcc gcc-c++ make
+          - name: Arch Linux
+            image: archlinux:latest
+            install: pacman -Sy --noconfirm cmake base-devel
+          - name: Alpine
+            image: alpine:latest
+            install: apk add --no-cache cmake build-base
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        run: ${{ matrix.install }}
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure
+
+  # 4. BSD FAMILY (VM-based via vmactions)
+
+  # FreeBSD without procfs: exercises sysctl(KERN_PROC_PATHNAME) and
+  # other non-proc methods. procfs is intentionally NOT mounted.
+  freebsd-noproc:
+    name: FreeBSD (sysctl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in FreeBSD (no /proc)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '15.0'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # FreeBSD with procfs mounted: additionally exercises
+  # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
+  freebsd-proc:
+    name: FreeBSD (procfs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in FreeBSD (with /proc)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '15.0'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+            mkdir -p /proc
+            mount -t procfs proc /proc
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  openbsd:
+    name: OpenBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg_add cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  netbsd:
+    name: NetBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in NetBSD
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: '10.1'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            /usr/sbin/pkg_add -u cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # DragonFlyBSD runs separately — different pkg manager
+  dragonflybsd:
+    name: DragonFlyBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in DragonFlyBSD
+        uses: vmactions/dragonflybsd-vm@v1
+        with:
+          release: '6.4.2'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # 5. SOLARIS / ILLUMOS (VM-based)
+  solaris-suite:
+    name: Solaris
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in Solaris
+        uses: vmactions/solaris-vm@v1
+        with:
+          release: '11.4-gcc-14'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkgutil -y -i cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # 6. HAIKU — exercises find_path(B_APP_IMAGE_SYMBOL), getprogname,
+  # __progname, and dladdr, all currently UNVERIFIED in progpath.cpp.
+  # Uses cross-platform-actions/action which boots a real Haiku VM on
+  # an Ubuntu host via QEMU under the hood.
+  haiku:
+    name: Haiku (r1beta5)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test on Haiku
+        uses: cross-platform-actions/action@v1.0.0
+        with:
+          operating_system: haiku
+          version: 'r1beta5'
+          shell: bash
+          run: |
+            pkgman install -y cmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug
+            cmake --build build
+            cd build && ctest --output-on-failure
+
+  # 7. MIDNIGHTBSD — FreeBSD-derived, uses mport/pkg.
+  midnightbsd:
+    name: MidnightBSD (4.0.4)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Start VM
+        uses: cross-platform-actions/action@v1.1.0
+        with:
+          operating_system: midnightbsd
+          version: '4.0.4'
+          shell: bash
+      - name: Install CMake
+        shell: cpa.sh {0}
+        run: sudo mport install cmake-core || command -v cmake >/dev/null 2>&1
+      - name: Install GNU Make
+        shell: cpa.sh {0}
+        run: sudo mport install gmake || command -v gmake >/dev/null 2>&1
+      - name: Verify tools
+        shell: cpa.sh {0}
+        run: |
+          cmake --version
+          gmake --version
+      - name: Configure
+        shell: cpa.sh {0}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+      - name: Build
+        shell: cpa.sh {0}
+        run: cmake --build build
+      - name: Test
+        shell: cpa.sh {0}
+        run: ctest --test-dir build --output-on-failure
+
+  # 8. OMNIOS — illumos/Solaris-family.
+  # Exercises getexecname and /proc/self/path/a.out methods.
+  omnios:
+    name: OmniOS (r151056)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Start VM
+        uses: cross-platform-actions/action@v1.1.0
+        with:
+          operating_system: omnios
+          version: 'r151056'
+          shell: bash
+      - name: Install dependencies
+        shell: cpa.sh {0}
+        run: |
+          sudo pkg set-publisher -r -O https://pkg.omnios.org/r151056/extra extra.omnios
+          sudo pkg refresh
+          sudo pkg install --accept developer/gcc14 developer/build/gnu-make system/header ooce/developer/cmake
+      - name: Verify tools
+        shell: cpa.sh {0}
+        run: |
+          gcc --version
+          g++ --version
+          cmake --version
+          gmake --version
+      - name: Configure
+        shell: cpa.sh {0}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+      - name: Build
+        shell: cpa.sh {0}
+        run: cmake --build build
+      - name: Test
+        shell: cpa.sh {0}
+        run: ctest --test-dir build --output-on-failure

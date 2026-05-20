@@ -9,3 +9,5 @@ IndentCaseLabels: true
 ColumnLimit: 0
 IndentPPDirectives: AfterHash
 FixNamespaceComments: true
+MaxEmptyLinesToKeep: 2
+SeparateDefinitionBlocks: Leave
