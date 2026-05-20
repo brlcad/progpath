@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # show path method debug output on any test failure
+  # debug mode 3 = print method activity and keep evaluating methods
   PROGPATH_DEBUG: 3
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
         run: cmake --build build --config Debug
       - name: Test
         working-directory: build
-        run: ctest -C Debug --output-on-failure
+        run: ctest -C Debug --output-on-failure --verbose
 
   # 2. MACOS (Intel & Apple Silicon)
   macos-suite:
@@ -44,7 +44,7 @@ jobs:
         run: cmake --build build --config Debug
       - name: Test
         working-directory: build
-        run: ctest --output-on-failure
+        run: ctest --output-on-failure --verbose
 
   # 3. LINUX DISTROS (Docker-based)
   linux-distros:
@@ -84,7 +84,7 @@ jobs:
         run: cmake --build build
       - name: Test
         working-directory: build
-        run: ctest --output-on-failure
+        run: ctest --output-on-failure --verbose
 
   # 4. BSD FAMILY (VM-based via vmactions)
 
@@ -107,7 +107,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   # FreeBSD with procfs mounted: additionally exercises
   # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
@@ -130,7 +130,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   openbsd:
     name: OpenBSD
@@ -149,7 +149,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   netbsd:
     name: NetBSD
@@ -168,7 +168,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   # DragonFlyBSD runs separately — different pkg manager
   dragonflybsd:
@@ -188,7 +188,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   # 5. SOLARIS / ILLUMOS (VM-based)
   solaris-suite:
@@ -208,7 +208,7 @@ jobs:
           run: |
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   # 6. HAIKU — exercises find_path(B_APP_IMAGE_SYMBOL), getprogname,
   # __progname, and dladdr, all currently UNVERIFIED in progpath.cpp.
@@ -221,7 +221,10 @@ jobs:
       - uses: actions/checkout@v6
       - name: Test on Haiku
         uses: cross-platform-actions/action@v1.0.0
+        env:
+          PROGPATH_DEBUG: ${{ env.PROGPATH_DEBUG }}
         with:
+          environment_variables: PROGPATH_DEBUG
           operating_system: haiku
           version: 'r1beta5'
           shell: bash
@@ -229,7 +232,7 @@ jobs:
             pkgman install -y cmake
             cmake -B build -DCMAKE_BUILD_TYPE=Debug
             cmake --build build
-            cd build && ctest --output-on-failure
+            cd build && ctest --output-on-failure --verbose
 
   # 7. MIDNIGHTBSD — FreeBSD-derived, uses mport/pkg.
   midnightbsd:
@@ -239,7 +242,10 @@ jobs:
       - uses: actions/checkout@v6
       - name: Start VM
         uses: cross-platform-actions/action@v1.1.0
+        env:
+          PROGPATH_DEBUG: ${{ env.PROGPATH_DEBUG }}
         with:
+          environment_variables: PROGPATH_DEBUG
           operating_system: midnightbsd
           version: '4.0.4'
           shell: bash
@@ -262,7 +268,7 @@ jobs:
         run: cmake --build build
       - name: Test
         shell: cpa.sh {0}
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure --verbose
 
   # 8. OMNIOS — illumos/Solaris-family.
   # Exercises getexecname and /proc/self/path/a.out methods.
@@ -273,7 +279,10 @@ jobs:
       - uses: actions/checkout@v6
       - name: Start VM
         uses: cross-platform-actions/action@v1.1.0
+        env:
+          PROGPATH_DEBUG: ${{ env.PROGPATH_DEBUG }}
         with:
+          environment_variables: PROGPATH_DEBUG
           operating_system: omnios
           version: 'r151056'
           shell: bash
@@ -298,4 +307,4 @@ jobs:
         run: cmake --build build
       - name: Test
         shell: cpa.sh {0}
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --output-on-failure --verbose
