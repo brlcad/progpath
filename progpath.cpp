@@ -76,7 +76,7 @@
 #ifdef HAVE_DIRECT_H
 #  include <direct.h>
 #endif
-#ifdef HAVE_LIBPROC_H /* for proc_pidpath */
+#ifdef HAVE_DECL_PROC_PIDPATH /* macOS libproc.h for proc_pidpath */
 #  include <libproc.h>
 #endif
 #ifdef HAVE_UNISTD_H
@@ -381,7 +381,7 @@ static char *progcwd(char *buf, size_t buflen) {
   }
 #endif
 
-#ifdef HAVE__GETCWD
+#if defined(HAVE__GETCWD) && defined(HAVE_DIRECT_H)
   {
     char cwd[MAXPATHLEN] = {0};
     char mbuf[MAXPATHLEN] = {0};
@@ -1072,7 +1072,7 @@ char *progpath(char *buf, size_t buflen) {
     if (!main_fname) {
       Dl_info i;
       const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
-      if (mainfunc && dladdr(mainfunc, &i) && i.dli_fname) {
+      if (mainfunc && dladdr(const_cast<void *>(mainfunc), &i) && i.dli_fname) {
         main_fname = i.dli_fname;
       }
     }
