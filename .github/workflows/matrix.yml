@@ -1,4 +1,4 @@
-name: Full Multi-Platform Test
+name: Full Multi-Platform Matrix
 
 on: [push, pull_request]
 
@@ -20,12 +20,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Debug
       - name: Test
         working-directory: build
-        run: ctest -C Release --output-on-failure
+        run: ctest -C Debug --output-on-failure
 
   # 2. MACOS (Intel & Apple Silicon)
   macos-suite:
@@ -39,9 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
-        run: cmake --build build --config Release
+        run: cmake --build build --config Debug
       - name: Test
         working-directory: build
         run: ctest --output-on-failure
@@ -79,7 +79,7 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install }}
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
         run: cmake --build build
       - name: Test
@@ -100,7 +100,7 @@ jobs:
   #       with:
   #         prepare: pkg install -y cmake
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -118,7 +118,7 @@ jobs:
   #           pkg install -y cmake
   #           mount -t procfs proc /proc
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -132,7 +132,7 @@ jobs:
   #       with:
   #         prepare: pkg_add cmake
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -148,7 +148,7 @@ jobs:
   #           export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/amd64/10.0/All/"
   #           pkgin -y update && pkgin -y install cmake
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -163,7 +163,7 @@ jobs:
   #       with:
   #         prepare: pkg install -y cmake
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -179,7 +179,7 @@ jobs:
   #         prepare: |
   #           pkgutil -y -i cmake gmake gcc4core
   #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=gmake
+  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
   #           cmake --build build
   #           cd build && ctest --output-on-failure
 
@@ -200,7 +200,7 @@ jobs:
           shell: bash
           run: |
             pkgman install -y cmake
-            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug
             cmake --build build
             cd build && ctest --output-on-failure
 
@@ -218,7 +218,7 @@ jobs:
           shell: bash
           run: |
             pkg install -y cmake
-            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug
             cmake --build build
             cd build && ctest --output-on-failure
 
@@ -237,6 +237,6 @@ jobs:
           shell: bash
           run: |
             pkg install cmake
-            cmake -B build -DCMAKE_BUILD_TYPE=Release
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug
             cmake --build build
             cd build && ctest --output-on-failure
