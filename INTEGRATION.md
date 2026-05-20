@@ -31,9 +31,9 @@ After install, make sure `pkg-config` can find `progpath.pc` and then use:
 pkg-config --cflags --libs progpath
 ```
 
-## Vendoring
+## Bundling
 
-If you vendor the source directly, add the project with `add_subdirectory(...)`
+If you bundle the source directly, add the project with `add_subdirectory(...)`
 and link either `progpath` or `progpath-static`.
 If you instead compile `progpath.cpp` directly into a Windows static build,
 define `PROGPATH_STATIC` for that target before including `progpath.h`.

@@ -56,7 +56,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cppcheck
-        cppcheck --project=build/compile_commands.json --enable=warning,portability --inconclusive --error-exitcode=1
+        cppcheck --force --enable=all --inconclusive --error-exitcode=1 --suppress=missingIncludeSystem . -I . -I build --suppress=*:build/CMakeFiles
 
     - name: Configure CMake (Sanitizers)
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'

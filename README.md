@@ -5,7 +5,17 @@ tiny C/C++ library for getting initial paths for a running application,
 encapsulating platform-specific details for getting a path to the running
 executable or its initial working dir.
 
-example usage:
+other efforts implement similar functionality, but where progpath differs is:
+
+1. absolute API simplicity,
+2. simple build integration,
+3. number of methods it uses,
+4. ease adding new methods, and
+5. works after changing dirs!
+
+## Example
+
+this example is included and compiled as a 'progpath' binary:
 
 ```C
     #include "progpath.h"
@@ -25,7 +35,9 @@ example usage:
     }
 ```
 
-that code is included and compiled by default, so can see it in action:
+## Build
+
+compile to see the example in action:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
@@ -36,65 +48,39 @@ that code is included and compiled by default, so can see it in action:
     Initial working dir is [ /Users/morrison ]
 ```
 
-## Build
+## Integrate into Another Code
 
-```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
+after `cmake --install`, callers can use:
 
-## Integrate
+- CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath`
 
-After `cmake --install`, consumers can use either:
-
-- CMake: `find_package(progpath REQUIRED)` then link `progpath::progpath` or `progpath::progpath-static`
-- pkg-config: `pkg-config --cflags --libs progpath`
-
-Detailed consumer notes live in [INTEGRATION.md](INTEGRATION.md).  `make install`
-also installs that file, this README, and a `progpath(3)` man page.
+of find more detailed notes and other options in [INTEGRATION.md](INTEGRATION.md).
 
 ## Initialization
 
-progpath captures the initial working directory (ipwd) once, as early as
-possible, so `progipwd()` returns it correctly even after `chdir()`.  How
-that capture happens depends on how you link the library:
+progpath captures the initial working directory (ipwd) once, as early
+as possible, so `progipwd()` can return it correctly even after
+`chdir()`.  how that capture happens depends on how you link the
+library:
 
 | Linking mode | Init behavior |
 |---|---|
-| Shared library (`.so`/`.dylib`/`.dll`) | Automatic — C++ static constructor fires before `main()`. Nothing to do. |
-| Static lib, linked from **C++** | Same — C++ runtime fires the constructor. |
-| Static lib, linked from **pure C** | **Lazy** — ipwd is captured on the first call to `progipwd()` or `progpath()`. Call one of them early in `main()`, before any `chdir()`. |
+| Shared library (`.so`/`.dylib`/`.dll`) | **Automatic** — C++ static constructor fires before `main()`. Nothing to do. |
+| Static lib, linked from **C++** | **Automatic** — C++ runtime fires the constructor. |
+| Static lib, linked from **pure C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`. Call either early, before any `chdir()`.|
 
-For the pure-C static case, the safe pattern is:
+thread safety: do not call progpath/progipwd concurrently before first
+capture completes.  Init from main thread before spawning other
+threads.
 
-```c
-int main(int argc, char *argv[]) {
-    char ipwd[4096];
-    progipwd(ipwd, sizeof(ipwd));  /* capture before any chdir */
-    /* ... rest of program ... */
-}
-```
-
-Thread safety: do not call progpath/progipwd concurrently before the
-first capture completes.  Initialize from the main thread before spawning
-other threads.
-
-other efforts implement similar functionality, but where progpath differs is:
-
-1. absolute API simplicity,
-2. simple build integration,
-3. number of methods it uses,
-4. ease adding new methods, and
-5. works after changing dirs!
-
-progpath includes an example program for testing your environment, and should
-work everywhere.  [let me know](https://github.com/brlcad/progpath/issues) if
-you find an environment that doesn't work!
+progpath is library API but includes an example 'progpath' program for
+testing that should work everywhere.  [let me
+know](https://github.com/brlcad/progpath/issues) if you find an
+environment that doesn't work!
 
 ## Platform CI Status Matrix
 
-The following environments are continuously tested. The badges reflect the current status of the `test.yml` workflow for each specific platform.
+following environments are continuously tested; badges reflect current status for each specific platform:
 
 | OS Group | Environment | Architecture | Status |
 |---|---|---|---|
