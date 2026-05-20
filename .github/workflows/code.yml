@@ -103,12 +103,7 @@ jobs:
       uses: github/codeql-action/init@v4
       with:
         languages: cpp
-
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build
-      run: cmake --build build
+        build-mode: none
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
