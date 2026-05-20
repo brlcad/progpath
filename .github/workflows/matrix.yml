@@ -216,9 +216,17 @@ jobs:
           operating_system: midnightbsd
           version: '4.0.4'
           shell: bash
-      - name: Install dependencies
+      - name: Install CMake
         shell: cpa.sh {0}
-        run: sudo mport install cmake-core gmake
+        run: sudo mport install cmake-core || command -v cmake >/dev/null 2>&1
+      - name: Install GNU Make
+        shell: cpa.sh {0}
+        run: sudo mport install gmake || command -v gmake >/dev/null 2>&1
+      - name: Verify tools
+        shell: cpa.sh {0}
+        run: |
+          cmake --version
+          gmake --version
       - name: Configure
         shell: cpa.sh {0}
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
@@ -247,7 +255,14 @@ jobs:
         run: |
           sudo pkg set-publisher -r -O https://pkg.omnios.org/r151056/extra extra.omnios
           sudo pkg refresh
-          sudo pkg install --accept ooce/omnios-build-tools ooce/developer/cmake
+          sudo pkg install --accept developer/gcc14 developer/build/gnu-make system/header ooce/developer/cmake
+      - name: Verify tools
+        shell: cpa.sh {0}
+        run: |
+          gcc --version
+          g++ --version
+          cmake --version
+          gmake --version
       - name: Configure
         shell: cpa.sh {0}
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
