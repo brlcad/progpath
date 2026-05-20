@@ -86,102 +86,129 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure
 
-  # # 4. BSD FAMILY (VM-based via vmactions)
+  # 4. BSD FAMILY (VM-based via vmactions)
 
-  # # FreeBSD without procfs: exercises sysctl(KERN_PROC_PATHNAME) and
-  # # other non-proc methods. procfs is intentionally NOT mounted.
-  # freebsd-noproc:
-  #   name: BSD (freebsd, no /proc)
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in FreeBSD (no /proc)
-  #       uses: vmactions/freebsd-vm@v1
-  #       with:
-  #         prepare: pkg install -y cmake
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  # FreeBSD without procfs: exercises sysctl(KERN_PROC_PATHNAME) and
+  # other non-proc methods. procfs is intentionally NOT mounted.
+  freebsd-noproc:
+    name: FreeBSD (sysctl)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in FreeBSD (no /proc)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '15.0'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # # FreeBSD with procfs mounted: additionally exercises
-  # # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
-  # freebsd-proc:
-  #   name: BSD (freebsd, with /proc)
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in FreeBSD (with /proc)
-  #       uses: vmactions/freebsd-vm@v1
-  #       with:
-  #         prepare: |
-  #           pkg install -y cmake
-  #           mount -t procfs proc /proc
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  # FreeBSD with procfs mounted: additionally exercises
+  # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
+  freebsd-proc:
+    name: FreeBSD (procfs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in FreeBSD (with /proc)
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: '15.0'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+            mkdir -p /proc
+            mount -t procfs proc /proc
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # openbsd:
-  #   name: BSD (openbsd)
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in OpenBSD
-  #       uses: vmactions/openbsd-vm@v1
-  #       with:
-  #         prepare: pkg_add cmake
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  openbsd:
+    name: OpenBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg_add cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # netbsd:
-  #   name: BSD (netbsd)
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in NetBSD
-  #       uses: vmactions/netbsd-vm@v1
-  #       with:
-  #         prepare: |
-  #           export PKG_PATH="https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/amd64/10.0/All/"
-  #           pkgin -y update && pkgin -y install cmake
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  netbsd:
+    name: NetBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in NetBSD
+        uses: vmactions/netbsd-vm@v1
+        with:
+          release: '10.1'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            /usr/sbin/pkg_add -u cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # # DragonFlyBSD runs separately — different pkg manager
-  # dragonflybsd:
-  #   name: BSD (dragonflybsd)
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in DragonFlyBSD
-  #       uses: vmactions/dragonflybsd-vm@v1
-  #       with:
-  #         prepare: pkg install -y cmake
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  # DragonFlyBSD runs separately — different pkg manager
+  dragonflybsd:
+    name: DragonFlyBSD
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in DragonFlyBSD
+        uses: vmactions/dragonflybsd-vm@v1
+        with:
+          release: '6.4.2'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkg install -y cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
-  # # 5. SOLARIS / ILLUMOS (VM-based)
-  # solaris-suite:
-  #   name: Solaris
-  #   runs-on: macos-13
-  #   steps:
-  #     - uses: actions/checkout@v6
-  #     - name: Test in Solaris
-  #       uses: vmactions/solaris-vm@v1
-  #       with:
-  #         prepare: |
-  #           pkgutil -y -i cmake gmake gcc4core
-  #         run: |
-  #           cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
-  #           cmake --build build
-  #           cd build && ctest --output-on-failure
+  # 5. SOLARIS / ILLUMOS (VM-based)
+  solaris-suite:
+    name: Solaris
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in Solaris
+        uses: vmactions/solaris-vm@v1
+        with:
+          release: '11.4-gcc-14'
+          usesh: true
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            pkgutil -y -i cmake gmake
+          run: |
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake --build build
+            cd build && ctest --output-on-failure
 
   # 6. HAIKU — exercises find_path(B_APP_IMAGE_SYMBOL), getprogname,
   # __progname, and dladdr, all currently UNVERIFIED in progpath.cpp.
