@@ -76,7 +76,7 @@
 #ifdef HAVE_DIRECT_H
 #  include <direct.h>
 #endif
-#ifdef HAVE_DECL_PROC_PIDPATH /* macOS libproc.h for proc_pidpath */
+#if defined(HAVE_LIBPROC_H) && defined(HAVE_DECL_PROC_PIDPATH) /* macOS libproc.h for proc_pidpath */
 #  include <libproc.h>
 #endif
 #ifdef HAVE_UNISTD_H
