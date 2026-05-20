@@ -712,9 +712,13 @@ char *progpath(char *buf, size_t buflen) {
   {
     char mbuf[MAXPATHLEN] = {0};
     size_t len = MAXPATHLEN - 1;
-    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, -1, KERN_PROC_PATHNAME};
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_PATHNAME};
     struct method m = METHOD("sysctl(KERN_PROC_ARGS)");
-    sysctl(mib, 4, mbuf, &len, NULL, 0);
+    if (sysctl(mib, 4, mbuf, &len, NULL, 0) == 0) {
+      if (len >= MAXPATHLEN)
+        len = MAXPATHLEN - 1;
+      mbuf[len] = '\0';
+    }
     finalize(m, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       chdir_if_diff(cwd);
@@ -769,7 +773,11 @@ char *progpath(char *buf, size_t buflen) {
 #endif
 
   /* verified, relative: OpenBSD */
-#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV)
+  /* NetBSD also exposes KERN_PROC_ARGV, but returns NUL-separated strings
+   * rather than OpenBSD's pointer array followed by strings layout.
+   * Restrict this block to the OpenBSD-style capability set.
+   */
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV) && !defined(HAVE_DECL_KERN_PROC_PATHNAME)
   {
     char mbuf[MAXPATHLEN] = {0};
     int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
