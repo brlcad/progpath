@@ -48,32 +48,32 @@ jobs:
 
   # 3. LINUX DISTROS (Docker-based)
   linux-distros:
-    name: Linux (${{ matrix.distro }})
+    name: Linux (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - distro: ubuntu:latest
-            pkgs: cmake build-essential
+          - name: Ubuntu
+            image: ubuntu:latest
             install: apt-get update -q && apt-get install -y cmake build-essential
-          - distro: debian:stable
-            pkgs: cmake build-essential
+          - name: Debian
+            image: debian:stable
             install: apt-get update -q && apt-get install -y cmake build-essential
-          - distro: fedora:latest
-            pkgs: cmake gcc gcc-c++ make
+          - name: Fedora
+            image: fedora:latest
             install: dnf install -y cmake gcc gcc-c++ make
-          - distro: opensuse/leap
-            pkgs: cmake gcc gcc-c++ make
+          - name: openSUSE
+            image: registry.opensuse.org/opensuse/distrobox-packaging:latest
             install: zypper install -y cmake gcc gcc-c++ make
-          - distro: archlinux:latest
-            pkgs: cmake base-devel
+          - name: Arch Linux
+            image: archlinux:latest
             install: pacman -Sy --noconfirm cmake base-devel
-          - distro: alpine:latest
-            pkgs: cmake build-base
+          - name: Alpine
+            image: alpine:latest
             install: apk add --no-cache cmake build-base
     container:
-      image: ${{ matrix.distro }}
+      image: ${{ matrix.image }}
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
