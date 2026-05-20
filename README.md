@@ -1,32 +1,30 @@
 # progpath
 [![Release Build and Install](https://github.com/brlcad/progpath/actions/workflows/release.yml/badge.svg)](https://github.com/brlcad/progpath/actions/workflows/release.yml)
 
-tiny C/C++ library for getting initial paths for a running application,
-encapsulating platform-specific details for getting a path to the running
-executable or its initial working dir.
-
-other efforts implement similar functionality, but where progpath differs is:
+tiny C/C++ library for getting initial paths for a running
+application, encapsulating platform-specific details for getting a
+path to the running executable or its initial working dir.  where
+progpath differs from other efforts:
 
 1. absolute API simplicity,
-2. simple build integration,
-3. number of methods it uses,
+2. trivial build integration,
+3. number of methods/environments,
 4. ease adding new methods, and
 5. works after changing dirs!
 
-## Example
-
-this example is included and compiled as a 'progpath' binary:
+## example, included as 'progpath' binary:
 
 ```C
     #include "progpath.h"
     #include <stdio.h> // for printf
     #include <stdlib.h> // for free
     int main(int ac, char *av[]) {
-      char pp[4096], *ipwd;
 
+      char pp[4096];
       progpath(pp, sizeof(pp)); // pass buffer
       printf(" Program executable is [ %s ]\n", pp);
 
+      char *ipwd;
       ipwd = progipwd(NULL, 0); // or allocate
       printf("Initial working dir is [ %s ]\n", ipwd);
       free(ipwd);
@@ -35,9 +33,7 @@ this example is included and compiled as a 'progpath' binary:
     }
 ```
 
-## Build
-
-compile to see the example in action:
+## compile and run demo:
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
@@ -48,7 +44,7 @@ compile to see the example in action:
     Initial working dir is [ /Users/morrison ]
 ```
 
-## Integrate into Another Code
+## integrate into other codes
 
 after `cmake --install`, callers can use:
 
@@ -56,7 +52,7 @@ after `cmake --install`, callers can use:
 
 of find more detailed notes and other options in [INTEGRATION.md](INTEGRATION.md).
 
-## Initialization
+## initialization
 
 progpath captures the initial working directory (ipwd) once, as early
 as possible, so `progipwd()` can return it correctly even after
@@ -78,7 +74,7 @@ testing that should work everywhere.  [let me
 know](https://github.com/brlcad/progpath/issues) if you find an
 environment that doesn't work!
 
-## Platform CI Status Matrix
+## platform CI status matrix
 
 following environments are continuously tested; badges reflect current status for each specific platform:
 
