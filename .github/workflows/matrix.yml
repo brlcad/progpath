@@ -18,7 +18,7 @@ jobs:
         os: [windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
@@ -37,7 +37,7 @@ jobs:
         os: [macos-14]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
       - name: Build
@@ -75,7 +75,7 @@ jobs:
     container:
       image: ${{ matrix.distro }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: ${{ matrix.install }}
       - name: Configure
@@ -94,7 +94,7 @@ jobs:
   #   name: BSD (freebsd, no /proc)
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in FreeBSD (no /proc)
   #       uses: vmactions/freebsd-vm@v1
   #       with:
@@ -110,7 +110,7 @@ jobs:
   #   name: BSD (freebsd, with /proc)
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in FreeBSD (with /proc)
   #       uses: vmactions/freebsd-vm@v1
   #       with:
@@ -126,7 +126,7 @@ jobs:
   #   name: BSD (openbsd)
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in OpenBSD
   #       uses: vmactions/openbsd-vm@v1
   #       with:
@@ -140,7 +140,7 @@ jobs:
   #   name: BSD (netbsd)
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in NetBSD
   #       uses: vmactions/netbsd-vm@v1
   #       with:
@@ -157,7 +157,7 @@ jobs:
   #   name: BSD (dragonflybsd)
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in DragonFlyBSD
   #       uses: vmactions/dragonflybsd-vm@v1
   #       with:
@@ -172,7 +172,7 @@ jobs:
   #   name: Solaris
   #   runs-on: macos-13
   #   steps:
-  #     - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v6
   #     - name: Test in Solaris
   #       uses: vmactions/solaris-vm@v1
   #       with:
@@ -191,7 +191,7 @@ jobs:
     name: Haiku (r1beta5)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Test on Haiku
         uses: cross-platform-actions/action@v1.0.0
         with:
@@ -209,7 +209,7 @@ jobs:
     name: MidnightBSD (4.0.4)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Test on MidnightBSD
         uses: cross-platform-actions/action@v1.0.0
         with:
@@ -228,7 +228,7 @@ jobs:
     name: OmniOS (r151056)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Test on OmniOS
         uses: cross-platform-actions/action@v1.0.0
         with:
