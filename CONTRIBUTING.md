@@ -13,7 +13,7 @@ Please include:
 To add a new platform-specific method:
 
 1.  Update `CheckProgPath.cmake` to detect necessary header or function (e.g., `check_symbol_exists(my_func my_header.h HAVE_MY_FUNC)`).  Platform symbol assumptions (e.g., _WIN32) strongly discouraged.
-2.  Add new block in `progpath.cpp`, e.g.:
+2.  Add new block in the `PROGPATH_IMPLEMENTATION` section of `progpath.h.in`, e.g.:
 
 ```cpp
 #ifdef HAVE_MY_FUNC
@@ -31,6 +31,9 @@ To add a new platform-specific method:
 #endif
 ```
 
+The generated `progpath.h` is the public artifact.  Keep `progpath.cpp` as a
+minimal shim only.
+
 ## Building and Testing
 
 ```bash
@@ -38,4 +41,3 @@ cmake -S . -B build
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
-
