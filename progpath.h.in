@@ -201,7 +201,9 @@ PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 #ifdef PROGPATH_IMPLEMENTATION
 
 /* use any method at our disposal */
-#define _GNU_SOURCE 1
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE 1
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -1150,7 +1152,7 @@ char *progpath(char *buf, size_t buflen) {
     if (!main_fname) {
       Dl_info i;
       const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
-      if (mainfunc && dladdr(const_cast<void *>(mainfunc), &i) && i.dli_fname) {
+      if (mainfunc && dladdr((void *)mainfunc, &i) && i.dli_fname) {
         main_fname = i.dli_fname;
       }
     }
@@ -1241,13 +1243,14 @@ char *progpath(char *buf, size_t buflen) {
 }
 #endif
 
-void proginit(void) {
+static void proginit(void) {
   if (progpath_ipwd[0] != '\0')
     return;
 
   progipwd(progpath_ipwd, MAXPATHLEN);
 }
 
+#ifdef __cplusplus
 struct progpath_initializer {
   progpath_initializer() {
     proginit();
@@ -1257,6 +1260,7 @@ struct progpath_initializer {
 };
 
 static progpath_initializer pp;
+#endif
 
 #endif /* PROGPATH_IMPLEMENTATION */
 
