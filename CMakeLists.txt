@@ -69,10 +69,6 @@ configure_file(
   "${PROJECT_BINARY_DIR}/progpath.h"
   @ONLY
   )
-configure_file(
-  "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
-  "${PROJECT_BINARY_DIR}/progpath_config.h"
-  )
 
 # cross-reference HAVE_* symbols across config template, cmake checks,
 # and source code — warns at configure time if any are inconsistent
