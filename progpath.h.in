@@ -202,6 +202,14 @@ PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 
 #ifdef PROGPATH_IMPLEMENTATION
 
+#if !defined(__cplusplus) && !defined(PROGPATH_NO_C_INIT_WARNING)
+#  if defined(_MSC_VER)
+#    pragma message("progpath: C implementation mode uses lazy init; call progipwd() or progpath() before chdir(), or define PROGPATH_NO_C_INIT_WARNING to suppress this warning.")
+#  elif defined(__clang__) || defined(__GNUC__)
+#    warning "progpath: C implementation mode uses lazy init; call progipwd() or progpath() before chdir(), or define PROGPATH_NO_C_INIT_WARNING to suppress this warning."
+#  endif
+#endif
+
 /* use any method at our disposal */
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE 1
