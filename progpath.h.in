@@ -117,6 +117,8 @@ extern "C" {
 #      define PROGPATH_EXPORT
 #    elif defined(PROGPATH_EXPORTS)
 #      define PROGPATH_EXPORT __declspec(dllexport)
+#    elif defined(PROGPATH_IMPLEMENTATION)
+#      define PROGPATH_EXPORT
 #    else
 #      define PROGPATH_EXPORT __declspec(dllimport)
 #    endif
