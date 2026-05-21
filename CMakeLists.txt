@@ -180,13 +180,13 @@ install(FILES
 )
 
 ###
-# example program links libprogpath, calls progpath() and progipwd()
+# example program uses the single-header implementation directly
 ###
-add_executable(progpath-bin main.c)
+add_executable(progpath-bin demo.cpp)
 target_compile_options(progpath-bin PRIVATE ${PP_CFLAGS})
-
-# link lib, then rename because 'progpath' target is the library
-target_link_libraries(progpath-bin LINK_PUBLIC progpath)
+target_include_directories(progpath-bin PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 set_target_properties(progpath-bin PROPERTIES OUTPUT_NAME progpath)
 
 if (HAVE_TLO)
