@@ -77,9 +77,9 @@ configure_file(
 # cross-reference HAVE_* symbols across config template, cmake checks,
 # and source code — warns at configure time if any are inconsistent
 validate_config_symbols(
-  "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
+  "${PROJECT_SOURCE_DIR}/progpath.h.in"
   "${PROJECT_SOURCE_DIR}/CheckProgPath.cmake"
-  "${PROJECT_SOURCE_DIR}/progpath.cpp"
+  "${PROJECT_SOURCE_DIR}/progpath.h.in"
 )
 
 ###
