@@ -1,7 +1,7 @@
 # Integrating progpath
 
-`progpath` is intentionally small: build it directly in-tree, install it for
-`find_package`, or consume it with `pkg-config`.
+`progpath` is intentionally small.  The primary integration path is the
+generated single header; compiled library/package flows remain supported.
 
 ## Build
 
@@ -11,7 +11,28 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## CMake package
+## Direct single-header use
+
+Use the generated `progpath.h` from the build tree or install tree.
+Do not vendor `progpath.h.in` directly.
+
+One translation unit must define `PROGPATH_IMPLEMENTATION`:
+
+```cpp
+/* progpath_impl.cpp */
+#define PROGPATH_IMPLEMENTATION
+#include "progpath.h"
+```
+
+Include `progpath.h` normally everywhere else.
+
+If that implementation translation unit is compiled as C++, automatic
+pre-`main()` initialization is preserved.  If it is compiled as C,
+progpath emits a compile-time warning and falls back to lazy first-call
+initialization; define `PROGPATH_NO_C_INIT_WARNING` to suppress the warning
+once that tradeoff is intentional.
+
+## Installed CMake package
 
 After `cmake --install`, consumers can use:
 
@@ -23,7 +44,7 @@ target_link_libraries(myapp PRIVATE progpath::progpath)
 Use `progpath::progpath-static` if you specifically want the static target.
 On Windows, that target automatically adds `PROGPATH_STATIC` for consumers.
 
-## pkg-config
+## Installed pkg-config package
 
 After install, make sure `pkg-config` can find `progpath.pc` and then use:
 
@@ -31,12 +52,15 @@ After install, make sure `pkg-config` can find `progpath.pc` and then use:
 pkg-config --cflags --libs progpath
 ```
 
-## Bundling
+## In-tree library targets
 
 If you bundle the source directly, add the project with `add_subdirectory(...)`
 and link either `progpath` or `progpath-static`.
-If you instead compile `progpath.cpp` directly into a Windows static build,
-define `PROGPATH_STATIC` for that target before including `progpath.h`.
+
+The repository's compiled targets are now backed by a tiny `progpath.cpp`
+shim that defines `PROGPATH_IMPLEMENTATION` and includes the generated
+header, so library consumers and direct-header consumers exercise the same
+implementation.
 
 ## Installed docs
 
