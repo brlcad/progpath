@@ -28,6 +28,33 @@ target_include_directories(test_resolve_path PRIVATE
 )
 add_test(NAME test_resolve_path COMMAND test_resolve_path)
 
+add_executable(test_single_header_cpp test_single_header_cpp.cpp)
+target_include_directories(test_single_header_cpp PRIVATE ${PROJECT_BINARY_DIR})
+add_test(NAME test_single_header_cpp COMMAND test_single_header_cpp)
+set_tests_properties(test_single_header_cpp PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  ENVIRONMENT "PWD=${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+add_executable(test_single_header_split
+  test_single_header_split_c.c
+  test_single_header_impl.cpp
+)
+target_include_directories(test_single_header_split PRIVATE ${PROJECT_BINARY_DIR})
+add_test(NAME test_single_header_split COMMAND test_single_header_split)
+set_tests_properties(test_single_header_split PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  ENVIRONMENT "PWD=${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+add_executable(test_single_header_c test_single_header_c.c)
+target_include_directories(test_single_header_c PRIVATE ${PROJECT_BINARY_DIR})
+add_test(NAME test_single_header_c COMMAND test_single_header_c)
+set_tests_properties(test_single_header_c PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  ENVIRONMENT "PWD=${CMAKE_CURRENT_BINARY_DIR}"
+)
+
 # Validate progpath binary actually reports absolute paths.  Runs the
 # demo program and checks the output.  Also sets PROGPATH_DEBUG=3 so
 # failures produce useful output even without --output-on-failure.
