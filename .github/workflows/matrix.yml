@@ -336,13 +336,13 @@ jobs:
           key: ${{ secrets.CFARM_SSH_KEY }}
           envs: PROGPATH_DEBUG,REPO,SHA
           script: |
+            # Add paths for common build tools across CFarm hosts
+            export PATH=/opt/freeware/bin:/usr/local/bin:/opt/csw/bin:$PATH
+            
             rm -rf progpath-ci-${{ matrix.host }}
             git clone https://github.com/$REPO.git progpath-ci-${{ matrix.host }}
             cd progpath-ci-${{ matrix.host }}
             git checkout $SHA
-            
-            # Add paths for common build tools across CFarm hosts
-            export PATH=/opt/freeware/bin:/usr/local/bin:/opt/csw/bin:$PATH
             
             cmake -B build -DCMAKE_BUILD_TYPE=Debug
             cmake --build build
