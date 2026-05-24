@@ -1,7 +1,7 @@
-# Integrating progpath
+# integrating progpath
 
-`progpath` is intentionally small.  The primary integration path is the
-generated single header; compiled library/package flows remain supported.
+`progpath` is intentionally small and simple.  Main way to use it is
+by including a single header OR link against a compiled library.
 
 ## Build
 
@@ -14,7 +14,7 @@ ctest --test-dir build --output-on-failure
 ## Direct single-header use
 
 Use the generated `progpath.h` from the build tree or install tree.
-Do not vendor `progpath.h.in` directly.
+Do not install or use the `progpath.h.in` template directly.
 
 One translation unit must define `PROGPATH_IMPLEMENTATION`:
 
@@ -24,7 +24,7 @@ One translation unit must define `PROGPATH_IMPLEMENTATION`:
 #include "progpath.h"
 ```
 
-Include `progpath.h` normally everywhere else.
+Include `progpath.h` normally everywhere else for declarations.
 
 If that implementation translation unit is compiled as C++, automatic
 pre-`main()` initialization is preserved.  If it is compiled as C,
@@ -57,9 +57,9 @@ pkg-config --cflags --libs progpath
 If you bundle the source directly, add the project with `add_subdirectory(...)`
 and link either `progpath` or `progpath-static`.
 
-The repository's compiled targets are now backed by a tiny `progpath.cpp`
-shim that defines `PROGPATH_IMPLEMENTATION` and includes the generated
-header, so library consumers and direct-header consumers exercise the same
+The compiled library is backed by a tiny `progpath.cpp` shim that
+defines `PROGPATH_IMPLEMENTATION` and includes the generated header.
+Library consumers and direct-header consumers exercise the same
 implementation.
 
 ## Installed docs
