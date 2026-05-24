@@ -1,10 +1,10 @@
 # progpath
 [![Release Build and Install](https://github.com/brlcad/progpath/actions/workflows/release.yml/badge.svg)](https://github.com/brlcad/progpath/actions/workflows/release.yml)
 
-tiny C/C++ library for getting initial paths for a running
-application, encapsulating platform-specific details for getting a
-path to the running executable or its initial working dir.  where
-progpath differs from other efforts:
+tiny C/C++ single-header (or compiled) library for getting initial
+paths for a running app, encapsulating platform-specific details for
+getting a path to the running executable or the initial working dir.
+progpath's focus:
 
 1. absolute API simplicity,
 2. trivial build integration,
@@ -12,71 +12,29 @@ progpath differs from other efforts:
 4. ease adding new methods, and
 5. works after changing dirs!
 
-## primary integration: configured single-header
+### example, just include the header
 
-`progpath` now generates one self-contained `progpath.h` that embeds:
-
-- version macros
-- configure-time `HAVE_*` probe results
-- public declarations
-- implementation under `PROGPATH_IMPLEMENTATION`
-
-The vendorable artifact is the generated `progpath.h` from your build or install
-tree, not the checked-in `progpath.h.in` template.
-
-Typical flow:
-
-1. `cmake -S . -B build`
-2. vendor `build/progpath.h` into your tree, or install and copy the installed header
-3. define `PROGPATH_IMPLEMENTATION` in exactly one implementation translation unit
-4. include `progpath.h` normally everywhere else
-
-### one translation unit (C++)
-
-```cpp
+```C
 #define PROGPATH_IMPLEMENTATION
 #include "progpath.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <cstdio>
-#include <cstdlib>
-
-int main() {
+int main(int ac, char *av[]) {
   char pp[4096];
+  progpath(pp, sizeof(pp)); //pass buffer
+  printf(" Program executable is [ %s ]\n", pp);
+
   char *ipwd;
+  ipwd = progipwd(NULL, 0); // or allocate
+  printf("Initial working dir is [ %s ]\n", ipwd);
+  free(ipwd);
 
-  progpath(pp, sizeof(pp));
-  std::printf(" Program executable is [ %s ]\n", pp);
-
-  ipwd = progipwd(NULL, 0);
-  std::printf("Initial working dir is [ %s ]\n", ipwd);
-  std::free(ipwd);
   return 0;
 }
 ```
 
-### split translation units (C caller + C++ implementation)
-
-```cpp
-/* progpath_impl.cpp */
-#define PROGPATH_IMPLEMENTATION
-#include "progpath.h"
-```
-
-```c
-/* main.c */
-#include "progpath.h"
-
-int main(void) {
-  char pp[4096];
-  progpath(pp, sizeof(pp));
-  return 0;
-}
-```
-
-Compile the implementation translation unit as C++ if you want automatic
-pre-`main()` initialization.
-
-## build and run the bundled demo
+## build and run the demo
 
 ```shell
      % git clone https://github.com/brlcad/progpath.git && cd progpath
@@ -87,9 +45,9 @@ pre-`main()` initialization.
     Initial working dir is [ /Users/morrison ]
 ```
 
-## packaged library integration
+## cmake and/or pkg-config integration
 
-The compiled shared/static targets remain supported for projects that prefer
+compiled shared/static targets are supported for projects that prefer
 package-manager or `find_package` integration.
 
 After `cmake --install`, callers can use:
@@ -98,38 +56,47 @@ After `cmake --install`, callers can use:
 - CMake static: link `progpath::progpath-static`
 - `pkg-config`: `pkg-config --cflags --libs progpath`
 
-Find more detailed notes in [INTEGRATION.md](INTEGRATION.md).
+more detailed notes in [INTEGRATION.md](INTEGRATION.md).
 
 ## initialization
 
 progpath captures the initial working directory (ipwd) once, as early
-as possible, so `progipwd()` can return it correctly even after
-`chdir()`.  How that capture happens depends on how you build the
-implementation:
+as possible, often automatically, so `progipwd()` can return it
+correctly even after `chdir()`.  how that capture happens depends on
+how you integrate:
 
 | Build mode | Init behavior |
 |---|---|
 | Generated `progpath.h` implementation compiled as **C++** | **Automatic** — C++ static constructor fires before `main()`. Nothing to do. |
-| Generated `progpath.h` implementation compiled as **C** | **Lazy** — first call captures state. A compile-time warning is emitted unless `PROGPATH_NO_C_INIT_WARNING` is defined. Call `progipwd()` or `progpath()` early, before any explicit `chdir()`. |
-| Shared library (`.so`/`.dylib`/`.dll`) | **Automatic** — C++ static constructor fires before `main()`. Nothing to do. |
+| Generated `progpath.h` implementation compiled as **C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`.  call before any `chdir()`. |
+| Shared library (`.so`/`.dylib`/`.dll`) | **Automatic** — C++ static constructor fires before `main()`. nothing to do. |
 | Static lib, linked from **C++** | **Automatic** — C++ runtime fires the constructor. |
-| Static lib, linked from **pure C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`. Call either early, before any `chdir()`.|
+| Static lib, linked from **pure C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`. call before any `chdir()`.|
 
 ## notes and limitations
 
-- `progpath.h` is configured for a specific target environment. Re-run CMake to generate it for the platform you intend to ship.
-- For cross-compiles or redistributed artifacts, generate the header using the target toolchain and target feature probes.
-- Thread safety: do not call `progpath()` or `progipwd()` concurrently before first capture completes. Initialize from the main thread before spawning other threads.
-- Some lookup methods temporarily restore the initial working directory while resolving the executable path. Avoid concurrent directory changes while using the API.
+- `progpath.h` is configured for a specific target environment. run
+  CMake to generate it for the platform you intend to ship.
 
-progpath is library API but includes an example 'progpath' program for
-testing that should work everywhere.  [let me
+- for cross-compiles or redistributed artifacts, generate the header
+  using the target toolchain and target feature probes.
+
+- thread safety: do not call `progpath()` or `progipwd()` concurrently
+  before first capture completes. initialize from the main thread
+  before spawning other threads.
+
+- some methods temporarily change the working directory while
+  resolving the executable path. avoid concurrent directory changes
+  while using the API.
+
+progpath is library API but includes an example 'progpath' demo
+program for testing that should work everywhere.  [let me
 know](https://github.com/brlcad/progpath/issues) if you find an
 environment that doesn't work!
 
 ## platform CI status matrix
 
-following environments are continuously tested; badges reflect current status for each specific platform:
+following environments are continuously tested; badges reflect current status for each:
 
 | OS Group | Environment | Architecture | Status |
 |---|---|---|---|
