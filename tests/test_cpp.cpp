@@ -22,7 +22,7 @@ int main() {
 
   // Test with std::vector as buffer
   std::vector<char> vecBuf(1024);
-  result = progpath(vecBuf.data(), vecBuf.size());
+  result = progpath(&vecBuf[0], vecBuf.size());
   if (!result) {
     std::cerr << "FAIL: progpath with vector buffer returned NULL" << std::endl;
     return 1;
