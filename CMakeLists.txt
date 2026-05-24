@@ -31,6 +31,20 @@ else ()
   list(APPEND PP_CFLAGS ${PP_CFLAGS_NOT_MSVC})
 endif ()
 
+# identify the environment
+cmake_host_system_information(RESULT os_name QUERY OS_NAME)
+cmake_host_system_information(RESULT os_release QUERY OS_RELEASE)
+cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
+message(STATUS "OS: ${os_name} ${os_release} ${os_platform}")
+
+cmake_host_system_information(RESULT PRETTY_NAME QUERY DISTRIB_PRETTY_NAME)
+message(STATUS "${PRETTY_NAME}")
+
+cmake_host_system_information(RESULT DISTRO QUERY DISTRIB_INFO)
+foreach(VAR IN LISTS DISTRO)
+  message(STATUS "${VAR}=`${${VAR}}`")
+endforeach()
+
 if (CMAKE_C_COMPILER_ID STREQUAL "SunPro" OR CMAKE_CXX_COMPILER_ID STREQUAL "SunPro")
   # SunPro C compiler doesn't automatically link the C++ runtime when linking C executables against C++ libraries
   link_libraries(Crun)
