@@ -20,8 +20,10 @@ int main(int ac, char *av[]) {
     return 1;
   }
 
+  /* more challenging */
   chdir("../../../..");
 
+  /* pass a buffer */
   progpath(buf, sizeof(buf));
   if (!buf[0]) {
     fprintf(stderr,
@@ -31,6 +33,7 @@ int main(int ac, char *av[]) {
   }
   printf(" Program executable is [ %s ]\n", buf);
 
+  /* or dynamically allocate */
   ipwd = progipwd(NULL, 0);
   if (!ipwd) {
     fprintf(stderr,
