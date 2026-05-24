@@ -1,7 +1,7 @@
 # integrating progpath
 
-`progpath` is intentionally small and simple.  Main way to use it is
-by including a single header OR link against a compiled library.
+`progpath` is intentionally small and simple.  Just include the header
+OR link against the compiled library.
 
 ## Build
 
