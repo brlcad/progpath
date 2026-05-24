@@ -1,15 +1,14 @@
-
+#define PROGPATH_IMPLEMENTATION
 #include "progpath.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-/* platform symbols only to prove progpath_config.h is not required */
 #ifdef _WIN32
-#  include <direct.h> /* for _chdir */
+#  include <direct.h>
 #  define chdir _chdir
 #else
-#  include <unistd.h> /* for chdir */
+#  include <unistd.h>
 #endif
 
 int main(int ac, char *av[]) {
@@ -34,7 +33,7 @@ int main(int ac, char *av[]) {
   }
   printf(" Program executable is [ %s ]\n", buf);
 
-  /* or allocate dynamically */
+  /* or dynamically allocate */
   ipwd = progipwd(NULL, 0);
   if (!ipwd) {
     fprintf(stderr,

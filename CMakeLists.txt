@@ -69,17 +69,13 @@ configure_file(
   "${PROJECT_BINARY_DIR}/progpath.h"
   @ONLY
   )
-configure_file(
-  "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
-  "${PROJECT_BINARY_DIR}/progpath_config.h"
-  )
 
 # cross-reference HAVE_* symbols across config template, cmake checks,
 # and source code — warns at configure time if any are inconsistent
 validate_config_symbols(
-  "${PROJECT_SOURCE_DIR}/progpath_config.h.in"
+  "${PROJECT_SOURCE_DIR}/progpath.h.in"
   "${PROJECT_SOURCE_DIR}/CheckProgPath.cmake"
-  "${PROJECT_SOURCE_DIR}/progpath.cpp"
+  "${PROJECT_SOURCE_DIR}/progpath.h.in"
 )
 
 ###
@@ -184,13 +180,13 @@ install(FILES
 )
 
 ###
-# example program links libprogpath, calls progpath() and progipwd()
+# example program uses the single-header implementation directly
 ###
-add_executable(progpath-bin main.c)
+add_executable(progpath-bin demo.cpp)
 target_compile_options(progpath-bin PRIVATE ${PP_CFLAGS})
-
-# link lib, then rename because 'progpath' target is the library
-target_link_libraries(progpath-bin LINK_PUBLIC progpath)
+target_include_directories(progpath-bin PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 set_target_properties(progpath-bin PROPERTIES OUTPUT_NAME progpath)
 
 if (HAVE_TLO)

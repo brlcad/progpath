@@ -38,6 +38,74 @@ extern "C" {
 #define PROGPATH_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define PROGPATH_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
+#cmakedefine HAVE_CTYPE_H @HAVE_CTYPE_H@
+#cmakedefine HAVE_DIRECT_H @HAVE_DIRECT_H@
+#cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
+#cmakedefine HAVE_FCNTL_H @HAVE_FCNTL_H@
+#cmakedefine HAVE_FINDDIRECTORY_H @HAVE_FINDDIRECTORY_H@
+#cmakedefine HAVE_IO_H @HAVE_IO_H@
+#cmakedefine HAVE_LIBPROC_H @HAVE_LIBPROC_H@
+#cmakedefine HAVE_MACH_O_DYLD_H @HAVE_MACH_O_DYLD_H@
+#cmakedefine HAVE_PROCINFO_H @HAVE_PROCINFO_H@
+#cmakedefine HAVE_SYS_AUXV_H @HAVE_SYS_AUXV_H@
+#cmakedefine HAVE_SYS_IOCTL_H @HAVE_SYS_IOCTL_H@
+#cmakedefine HAVE_SYS_PARAM_H @HAVE_SYS_PARAM_H@
+#cmakedefine HAVE_SYS_PROCFS_H @HAVE_SYS_PROCFS_H@
+#cmakedefine HAVE_SYS_STAT_H @HAVE_SYS_STAT_H@
+#cmakedefine HAVE_SYS_SYSCTL_H @HAVE_SYS_SYSCTL_H@
+#cmakedefine HAVE_SYS_TYPES_H @HAVE_SYS_TYPES_H@
+#cmakedefine HAVE_SYS_WAIT_H @HAVE_SYS_WAIT_H@
+#cmakedefine HAVE_UNISTD_H @HAVE_UNISTD_H@
+#cmakedefine HAVE_PROCESS_H @HAVE_PROCESS_H@
+#cmakedefine HAVE_WINDOWS_H @HAVE_WINDOWS_H@
+
+#cmakedefine HAVE_DLADDR @HAVE_DLADDR@
+#cmakedefine HAVE_DLSYM @HAVE_DLSYM@
+#cmakedefine HAVE_FIND_PATH @HAVE_FIND_PATH@
+#cmakedefine HAVE_GETAUXVAL @HAVE_GETAUXVAL@
+#cmakedefine HAVE_GETCWD @HAVE_GETCWD@
+#cmakedefine HAVE_GETEXECNAME @HAVE_GETEXECNAME@
+#cmakedefine HAVE_GETCURRENTDIRECTORY @HAVE_GETCURRENTDIRECTORY@
+#cmakedefine HAVE_GETMODULEFILENAMEA @HAVE_GETMODULEFILENAMEA@
+#cmakedefine HAVE_GETPROCS @HAVE_GETPROCS@
+#cmakedefine HAVE_GETPROCS64 @HAVE_GETPROCS64@
+#cmakedefine HAVE_GETPROGNAME @HAVE_GETPROGNAME@
+#cmakedefine HAVE_PROC_PIDPATH @HAVE_PROC_PIDPATH@
+#cmakedefine HAVE_READ @HAVE_READ@
+#cmakedefine HAVE_READLINK @HAVE_READLINK@
+#cmakedefine HAVE_REALPATH @HAVE_REALPATH@
+#cmakedefine HAVE_SEARCHPATHA @HAVE_SEARCHPATHA@
+#cmakedefine HAVE_SYSCTL @HAVE_SYSCTL@
+#cmakedefine HAVE_SYSCTLBYNAME @HAVE_SYSCTLBYNAME@
+#cmakedefine HAVE__GETCWD @HAVE__GETCWD@
+#cmakedefine HAVE__GET_PGMPTR @HAVE__GET_PGMPTR@
+#cmakedefine HAVE__NSGETEXECUTABLEPATH @HAVE__NSGETEXECUTABLEPATH@
+
+#cmakedefine HAVE_DECL_CTL_KERN @HAVE_DECL_CTL_KERN@
+#cmakedefine HAVE_DECL_KERN_PROC @HAVE_DECL_KERN_PROC@
+#cmakedefine HAVE_DECL_KERN_PROCARGS2 @HAVE_DECL_KERN_PROCARGS2@
+#cmakedefine HAVE_DECL_KERN_PROCNAME @HAVE_DECL_KERN_PROCNAME@
+#cmakedefine HAVE_DECL_KERN_PROC_ARGS @HAVE_DECL_KERN_PROC_ARGS@
+#cmakedefine HAVE_DECL_KERN_PROC_ARGV @HAVE_DECL_KERN_PROC_ARGV@
+#cmakedefine HAVE_DECL_KERN_PROC_PATHNAME @HAVE_DECL_KERN_PROC_PATHNAME@
+
+#cmakedefine HAVE_DECL_PROGRAM_INVOCATION_NAME @HAVE_DECL_PROGRAM_INVOCATION_NAME@
+#cmakedefine HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME @HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME@
+#cmakedefine HAVE_DECL_PIOCPSINFO @HAVE_DECL_PIOCPSINFO@
+#cmakedefine HAVE_DECL_CHDIR @HAVE_DECL_CHDIR@
+#cmakedefine HAVE_DECL_GETEXECNAME @HAVE_DECL_GETEXECNAME@
+#cmakedefine HAVE_DECL_GETPROGNAME @HAVE_DECL_GETPROGNAME@
+#cmakedefine HAVE_DECL_PROC_PIDPATH @HAVE_DECL_PROC_PIDPATH@
+#cmakedefine HAVE_DECL___ARGV @HAVE_DECL___ARGV@
+#cmakedefine HAVE_DECL___ARGV2 @HAVE_DECL___ARGV2@
+#cmakedefine HAVE_DECL___PROGNAME @HAVE_DECL___PROGNAME@
+#cmakedefine HAVE_DECL___PROGNAME2 @HAVE_DECL___PROGNAME2@
+#cmakedefine HAVE_DECL___PROGNAME_FULL @HAVE_DECL___PROGNAME_FULL@
+#cmakedefine HAVE_DECL___PROGNAME_FULL2 @HAVE_DECL___PROGNAME_FULL2@
+
+#cmakedefine HAVE_STRUCT_PSINFO @HAVE_STRUCT_PSINFO@
+#cmakedefine HAVE_STRUCT_PRPSINFO @HAVE_STRUCT_PRPSINFO@
+
 /*
  * When building or consuming the static library on Windows, define
  * PROGPATH_STATIC before including this header.  The exported
@@ -49,6 +117,8 @@ extern "C" {
 #      define PROGPATH_EXPORT
 #    elif defined(PROGPATH_EXPORTS)
 #      define PROGPATH_EXPORT __declspec(dllexport)
+#    elif defined(PROGPATH_IMPLEMENTATION)
+#      define PROGPATH_EXPORT
 #    else
 #      define PROGPATH_EXPORT __declspec(dllimport)
 #    endif
@@ -129,5 +199,1079 @@ PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef PROGPATH_IMPLEMENTATION
+
+#if !defined(__cplusplus) && !defined(PROGPATH_NO_C_INIT_WARNING)
+#  if defined(_MSC_VER)
+#    pragma message("progpath: C implementation mode uses lazy init; call progipwd() or progpath() before chdir(), or define PROGPATH_NO_C_INIT_WARNING to suppress this warning.")
+#  elif defined(__clang__) || defined(__GNUC__)
+#    warning "progpath: C implementation mode uses lazy init; call progipwd() or progpath() before chdir(), or define PROGPATH_NO_C_INIT_WARNING to suppress this warning."
+#  endif
+#endif
+
+/* use any method at our disposal */
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE 1
+#endif
+
+#include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef HAVE_SYS_AUXV_H
+#  include <sys/auxv.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+#  include <sys/wait.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#  include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#  include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_PROCFS_H
+#  include <sys/procfs.h>
+#endif
+#ifdef HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
+#endif
+#ifdef HAVE_DLFCN_H
+#  include <dlfcn.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
+#ifdef HAVE_MACH_O_DYLD_H
+#  include <mach-o/dyld.h>
+#endif
+#ifdef HAVE_PROCINFO_H
+#  include <procinfo.h>
+#endif
+#ifdef HAVE_FINDDIRECTORY_H
+#  include <FindDirectory.h>
+#endif
+#ifdef HAVE_DIRECT_H
+#  include <direct.h>
+#endif
+#if defined(HAVE_LIBPROC_H) && defined(HAVE_DECL_PROC_PIDPATH)
+#  include <libproc.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+#ifdef HAVE_IO_H
+#  include <io.h>
+#endif
+#ifdef HAVE_PROCESS_H
+#  include <process.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#  include <windows.h>
+#  define chdir _chdir
+#  define getcwd _getcwd
+#  define getpid _getpid
+#  define open _open
+#  define read _read
+#  define strdup _strdup
+#  define close _close
+#  ifndef O_RDONLY
+#    define O_RDONLY 0
+#  endif
+#  if defined(_MSC_VER) && _MSC_VER < 1900
+#    define snprintf _snprintf
+#  endif
+#endif
+#ifdef HAVE_CTYPE_H
+#  include <ctype.h>
+#endif
+
+/* Declare funcs without requiring they be available in system
+ * headers without the right includes.
+ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifndef HAVE_DECL_GETPROGNAME
+extern const char *getprogname(void);
+#endif
+#ifndef HAVE_DECL_GETEXECNAME
+extern const char *getexecname(void);
+#endif
+#ifndef HAVE_DECL_PROC_PIDPATH
+extern int proc_pidpath(int, void *, uint32_t);
+#endif
+#if !defined(HAVE_DECL_CHDIR) && !defined(HAVE_WINDOWS_H)
+extern int chdir(const char *);
+#endif
+#ifdef __cplusplus
+}
+#endif
+
+#ifndef MAXPATHLEN
+#  ifdef PATH_MAX
+#    define MAXPATHLEN PATH_MAX
+#  else
+#    define MAXPATHLEN 4096
+#  endif
+#endif
+
+static char progpath_ipwd[MAXPATHLEN] = {0};
+
+struct method {
+  int id;
+  int line;
+  const char *label;
+  int debug;
+};
+
+static struct method
+make_method(int *id, int line, const char *label, int debug) {
+  struct method m = {(*id)++, line, label, debug};
+  return m;
+}
+
+#define METHOD(x) make_method(&method, __LINE__, (x), debug)
+
+enum {
+  PP_DEFAULT = 0,
+  PP_PRINT = 1 << 0,
+  PP_CONTINUE = 1 << 1
+};
+
+static int pp_get_debug(void) {
+  const char *env = getenv("PROGPATH_DEBUG");
+  return env ? atoi(env) : 0;
+}
+
+static void pp_print(const char *fmt, ...) {
+  va_list args;
+  if (!(pp_get_debug() & PP_PRINT))
+    return;
+
+  va_start(args, fmt);
+  vfprintf(stderr, fmt, args);
+  va_end(args);
+}
+
+static void print_method(struct method m, const char *result) {
+  pp_print("Method %02d, line %04d: %s=[%s]\n", m.id, m.line, m.label, result);
+}
+
+static int is_path_absolute(const char *path) {
+  if (!path || path[0] == '\0')
+    return 0;
+  if (path[0] == '/')
+    return 1;
+  if (
+#ifdef HAVE_CTYPE_H
+      isalpha(path[0]) &&
+#endif
+      path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+    return 1;
+  if (path[0] == '\\' && path[1] == '\\')
+    return 1;
+  return 0;
+}
+
+static int path_has_separator(const char *path) {
+  if (!path)
+    return 0;
+
+  while (*path) {
+    if (*path == '/' || *path == '\\')
+      return 1;
+    path++;
+  }
+
+  return 0;
+}
+
+static void resolve_to_full_path(char *buf, size_t buflen) {
+  char rbuf[MAXPATHLEN] = {0};
+
+  if (!buf || buflen < 1)
+    return;
+
+  if (buflen > MAXPATHLEN)
+    buflen = MAXPATHLEN;
+  strncpy(rbuf, buf, buflen - 1);
+  rbuf[MAXPATHLEN - 1] = '\0';
+
+  if (is_path_absolute(rbuf) || rbuf[0] == '.' || path_has_separator(rbuf)) {
+#ifdef HAVE_REALPATH
+    char rpbuf[MAXPATHLEN] = {0};
+    if (realpath(rbuf, rpbuf)) {
+      strncpy(rbuf, rpbuf, MAXPATHLEN - 1);
+    }
+#endif
+  }
+
+#ifdef HAVE_SEARCHPATHA
+  if (!is_path_absolute(rbuf)) {
+    char found[MAXPATHLEN] = {0};
+    char *file_part = NULL;
+    if (SearchPathA(NULL, rbuf, ".exe", MAXPATHLEN - 1, found, &file_part) > 0) {
+      strncpy(rbuf, found, MAXPATHLEN - 1);
+    }
+  }
+#endif
+
+  if (!is_path_absolute(rbuf)) {
+    char *path_env = getenv("PATH");
+    if (path_env) {
+      char *path_dup = strdup(path_env);
+      if (path_dup) {
+#ifdef HAVE_UNISTD_H
+        char *dir = strtok(path_dup, ":");
+        while (dir) {
+          char full_path[MAXPATHLEN] = {0};
+          int written = snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
+          if (written < 0 || written >= MAXPATHLEN) {
+            dir = strtok(NULL, ":");
+            continue;
+          }
+          if (access(full_path, X_OK) == 0) {
+            strncpy(rbuf, full_path, MAXPATHLEN - 1);
+            break;
+          }
+          dir = strtok(NULL, ":");
+        }
+#endif
+        free(path_dup);
+      }
+    }
+  }
+
+  if (is_path_absolute(rbuf)) {
+    strncpy(buf, rbuf, buflen - 1);
+    buf[buflen - 1] = '\0';
+  }
+}
+
+static void finalize(struct method m, char *buf, size_t buflen, const char *result) {
+  if (!buf || buflen < 1)
+    return;
+
+  if (result)
+    strncpy(buf, result, buflen - 1);
+
+  if (buf[0] == 0)
+    return;
+
+  print_method(m, buf);
+  resolve_to_full_path(buf, buflen);
+  print_method(m, buf);
+}
+
+static int we_done_yet(struct method m, char **buf, size_t buflen, const char *path) {
+  size_t pathlen;
+  if (!path)
+    return 0;
+
+  pathlen = strlen(path);
+  if (pathlen < 2)
+    return 0;
+
+  if ((path[0] == '/') ||
+      (pathlen > 2 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':' && path[2] == '\\')) {
+
+    if (buf && !(*buf)) {
+      buflen = MAXPATHLEN;
+      *buf = (char *)calloc(buflen, sizeof(char));
+      assert(buf && *buf && (*buf)[0] == '\0');
+    }
+    if (buf && *buf && buflen > 0) {
+      strncpy(*buf, path, buflen - 1);
+      (*buf)[buflen - 1] = '\0';
+    }
+
+    if (m.debug & PP_CONTINUE)
+      return 0;
+    return 1;
+  }
+
+  return 0;
+}
+
+static char *progcwd(char *buf, size_t buflen) {
+  int debug = pp_get_debug();
+  int method = 0;
+
+  pp_print("progcwd() getting the current directory\n");
+
+#ifdef HAVE_GETCWD
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("getcwd");
+    getcwd(cwd, MAXPATHLEN);
+    finalize(m, mbuf, MAXPATHLEN, cwd);
+    if (we_done_yet(m, &buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+#if defined(HAVE__GETCWD) && defined(HAVE_DIRECT_H)
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("_getcwd");
+    _getcwd(cwd, MAXPATHLEN);
+    finalize(m, mbuf, MAXPATHLEN, cwd);
+    if (we_done_yet(m, &buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+#ifdef HAVE_REALPATH
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("realpath(.)");
+    realpath(".", cwd);
+    finalize(m, mbuf, MAXPATHLEN, cwd);
+    if (we_done_yet(m, &buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+#ifdef HAVE_GETCURRENTDIRECTORY
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("GetCurrentDirectory");
+    GetCurrentDirectory(MAXPATHLEN, cwd);
+    finalize(m, mbuf, MAXPATHLEN, cwd);
+    if (we_done_yet(m, &buf, buflen, mbuf))
+      return buf;
+  }
+#endif
+
+  {
+    struct method m = METHOD("UNKNOWN");
+    if (we_done_yet(m, &buf, buflen, NULL))
+      return buf;
+  }
+
+  if (buf && buf[0] != '\0')
+    return buf;
+  return NULL;
+}
+
+static void chdir_if_diff(const char *wd) {
+  char cwd[MAXPATHLEN] = {0};
+  int ret;
+
+  if (!wd || wd[0] == '\0')
+    return;
+
+  progcwd(cwd, MAXPATHLEN);
+
+  if (strncmp(cwd, wd, MAXPATHLEN - 1) == 0)
+    return;
+
+  ret = chdir(wd);
+  if (ret != 0) {
+    pp_print("WARNING: chdir(%s) failed\n", wd);
+    perror("chdir");
+  }
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+char *progipwd(char *buf, size_t buflen) {
+  int debug = pp_get_debug();
+  int method = 0;
+  struct method im = {0, __LINE__, "ipwd", 0};
+
+  pp_print("=== progipwd() ===\n");
+
+  if (progpath_ipwd[0]) {
+    we_done_yet(im, &buf, buflen, progpath_ipwd);
+    return buf;
+  }
+
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char mbuf[MAXPATHLEN] = {0};
+    char *pwd;
+    struct method m = METHOD("getenv(PWD)");
+    pwd = getenv("PWD");
+    if (pwd) {
+      strncpy(cwd, pwd, MAXPATHLEN - 1);
+      cwd[MAXPATHLEN - 1] = '\0';
+      finalize(m, mbuf, MAXPATHLEN, cwd);
+      if (we_done_yet(m, &buf, buflen, mbuf))
+        return buf;
+    }
+  }
+
+  {
+    char cwd[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+
+    pp_print("progipwd() using the current directory\n");
+
+    progcwd(cwd, MAXPATHLEN);
+    finalize(im, pbuf, MAXPATHLEN, cwd);
+    if (we_done_yet(im, &buf, buflen, pbuf))
+      return buf;
+  }
+
+  if (buf && buf[0] != '\0')
+    return buf;
+  return NULL;
+}
+
+char *progpath(char *buf, size_t buflen) {
+  int debug = pp_get_debug();
+  int method = 0;
+
+  char cwd[MAXPATHLEN] = {0};
+  char ipwd[MAXPATHLEN] = {0};
+
+  pp_print("=== progpath() ===\n");
+
+  progcwd(cwd, MAXPATHLEN);
+  progipwd(ipwd, MAXPATHLEN);
+
+  pp_print("cwd=%s ipwd=%s\n", cwd, ipwd);
+
+  chdir_if_diff(ipwd);
+
+#ifdef HAVE_GETPROGNAME
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = getprogname();
+    struct method m = METHOD("getprogname");
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_GETEXECNAME
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = getexecname();
+    struct method m = METHOD("getexecname");
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_GETMODULEFILENAMEA
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    DWORD ret = GetModuleFileNameA(NULL, mbuf, MAXPATHLEN);
+    struct method m = METHOD("GetModuleFileNameA");
+    if (ret > 0 && ret < MAXPATHLEN) {
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE__GET_PGMPTR
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = NULL;
+    struct method m = METHOD("_get_pgmptr");
+    _get_pgmptr(&argv0);
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_PROC_PIDPATH
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("proc_pidpath");
+    (void)proc_pidpath(getpid(), mbuf, buflen);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
+  {
+    extern char *program_invocation_name;
+    if (program_invocation_name) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("program_invocation_name");
+      finalize(m, mbuf, MAXPATHLEN, program_invocation_name);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+  {
+    extern char *program_invocation_short_name;
+    if (program_invocation_short_name) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("program_invocation_short_name");
+      finalize(m, mbuf, MAXPATHLEN, program_invocation_short_name);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___ARGV
+  {
+    extern char **__argv;
+    if (__argv) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__argv");
+      finalize(m, mbuf, MAXPATHLEN, __argv[0]);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___PROGNAME_FULL
+  {
+    extern char *__progname_full;
+    if (__progname_full) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__progname_full");
+      finalize(m, mbuf, MAXPATHLEN, __progname_full);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___PROGNAME
+  {
+    extern char *__progname;
+    if (__progname) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__progname");
+      finalize(m, mbuf, MAXPATHLEN, __progname);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_GETAUXVAL
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = (char *)getauxval(AT_EXECFN);
+    struct method m = METHOD("getauxval");
+    finalize(m, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN - 1;
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+    struct method m = METHOD("sysctl(KERN_PROC)");
+    sysctl(mib, 4, mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_PATHNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN - 1;
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_PATHNAME};
+    struct method m = METHOD("sysctl(KERN_PROC_ARGS)");
+    if (sysctl(mib, 4, mbuf, &len, NULL, 0) == 0) {
+      if (len >= MAXPATHLEN)
+        len = MAXPATHLEN - 1;
+      mbuf[len] = '\0';
+    }
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_ARGMAX, -1, -1};
+    int argmax;
+    size_t argmaxsz = sizeof(argmax);
+    char *pbuf;
+    size_t pbufsz;
+    struct method m = METHOD("sysctl(KERN_PROCARGS2)");
+    sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
+    pbuf = (char *)calloc(argmax, sizeof(char));
+    if (pbuf) {
+      mib[0] = CTL_KERN;
+      mib[1] = KERN_PROCARGS2;
+      mib[2] = getpid();
+      mib[3] = -1;
+      pbufsz = (size_t)argmax;
+      sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
+      finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int));
+      free(pbuf);
+    }
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROCNAME, -1, -1};
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctl(KERN_PROCNAME)");
+    sysctl(mib, 2, mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV) && !defined(HAVE_DECL_KERN_PROC_PATHNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
+    char **retargs;
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctl(KERN_PROCNAME)");
+    sysctl(mib, 4, NULL, &len, NULL, 0);
+    retargs = (char **)calloc(len, sizeof(char *));
+    if (retargs) {
+      sysctl(mib, 4, retargs, &len, NULL, 0);
+      finalize(m, mbuf, MAXPATHLEN, retargs[0]);
+      free(retargs);
+    }
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_SYSCTLBYNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctlbyname(kern.procname)");
+    sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE__NSGETEXECUTABLEPATH
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    uint32_t ulen = MAXPATHLEN - 1;
+    struct method m = METHOD("_NSGetExecutablePath");
+    _NSGetExecutablePath(mbuf, &ulen);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_FIND_PATH
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("find_path");
+    find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, mbuf, MAXPATHLEN);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/self/exe)");
+    readlink("/proc/self/exe", mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READ
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int fd;
+    struct method m = METHOD("readlink(/proc/self/exefile)");
+    fd = open("/proc/self/exefile", O_RDONLY);
+    if (fd >= 0) {
+      read(fd, mbuf, MAXPATHLEN - 1);
+      close(fd);
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/curproc/file)");
+    readlink("/proc/curproc/file", mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/curproc/exe)");
+    readlink("/proc/curproc/exe", mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/$PID/file)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/file", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_STRUCT_PSINFO
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    const char *argv0;
+    struct psinfo p;
+    int fd;
+    struct method m = METHOD("read(/proc/$PID/psinfo)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/psinfo", getpid());
+    fd = open(pbuf, O_RDONLY);
+    if (fd >= 0) {
+      if (read(fd, &p, sizeof(p)) == sizeof(p)) {
+        argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
+        finalize(m, mbuf, MAXPATHLEN, argv0);
+      }
+      close(fd);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#if defined(HAVE_STRUCT_PRPSINFO) && defined(HAVE_DECL_PIOCPSINFO)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    const char *argv0;
+    struct prpsinfo p;
+    int fd;
+    struct method m = METHOD("ioctl(/proc/$PID, prpsinfo)");
+    snprintf(pbuf, sizeof(pbuf), "/proc/%d", getpid());
+    fd = open(pbuf, O_RDONLY);
+    if (fd >= 0) {
+      ioctl(fd, PIOCPSINFO, &p);
+      close(fd);
+      argv0 = p.pr_fname;
+      finalize(m, mbuf, MAXPATHLEN, argv0);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/$PID/cmdline)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READ
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    int fd;
+    struct method m = METHOD("read(/proc/$PID/cmdline)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", (int)getpid());
+    fd = open(pbuf, O_RDONLY);
+    if (fd >= 0) {
+      read(fd, mbuf, MAXPATHLEN - 1);
+      close(fd);
+      finalize(m, mbuf, MAXPATHLEN, NULL);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/$PID/path/a.out)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/path/a.out", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/self/path/a.out)");
+    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/pinfo)");
+    readlink("/proc/pinfo", mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/$PID)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
+    finalize(m, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_DLADDR
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    static const char *main_fname = NULL;
+    struct method m = METHOD("dladdr(main)");
+
+    if (!main_fname) {
+      Dl_info i;
+      const void *mainfunc = dlsym(RTLD_DEFAULT, "main");
+      if (mainfunc && dladdr((void *)mainfunc, &i) && i.dli_fname) {
+        main_fname = i.dli_fname;
+      }
+    }
+
+    if (main_fname) {
+      finalize(m, mbuf, MAXPATHLEN, main_fname);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+        chdir_if_diff(cwd);
+        return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_GETPROCS
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = buf;
+    struct procsinfo pinfo[16];
+    int numproc;
+    int index = 0;
+    struct method m = METHOD("getprocs");
+    while ((numproc = getprocs(pinfo, sizeof(struct procsinfo), NULL, 0, &index, 16)) > 0) {
+      for (int i = 0; i < numproc; i++) {
+        if (pinfo[i].pi_state == SZOMB)
+          continue;
+        if (getpid() == (pid_t)pinfo[i].pi_pid) {
+          argv0 = pinfo[i].pi_comm;
+          finalize(m, mbuf, MAXPATHLEN, argv0);
+          break;
+        }
+      }
+    }
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_GETPROCS64
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = buf;
+    struct procentry64 *pentry;
+    int numproc;
+    int index = 0;
+    pid_t proc1 = (pid_t)0;
+    int proccnt;
+    struct method m = METHOD("getprocs64");
+
+    proccnt = getprocs64(NULL, 0, NULL, 0, &proc1, 1000000);
+    pentry = (struct procentry64 *)calloc(proccnt, sizeof(struct procentry64));
+    while ((numproc = getprocs64(pentry, sizeof(struct procentry64), NULL, 0, &index, proccnt)) > 0) {
+      for (int i = 0; i < numproc; i++) {
+        if (pentry[i].pi_state == SZOMB)
+          continue;
+        if (getpid() == (int)pentry[i].pi_pid) {
+          argv0 = pentry[i].pi_comm;
+          finalize(m, mbuf, MAXPATHLEN, argv0);
+          break;
+        }
+      }
+    }
+    free(pentry);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+#endif
+
+  {
+    struct method m = METHOD("UNKNOWN");
+    if (we_done_yet(m, &buf, buflen, NULL)) {
+      chdir_if_diff(cwd);
+      return buf;
+    }
+  }
+
+  chdir_if_diff(cwd);
+
+  if (buf && buf[0] != '\0')
+    return buf;
+  return NULL;
+}
+#ifdef __cplusplus
+}
+#endif
+
+static void proginit(void) {
+  if (progpath_ipwd[0] != '\0')
+    return;
+
+  progipwd(progpath_ipwd, MAXPATHLEN);
+}
+
+#ifdef __cplusplus
+struct progpath_initializer {
+  progpath_initializer() {
+    proginit();
+  }
+  ~progpath_initializer() {
+  }
+};
+
+static progpath_initializer pp;
+#endif
+
+#endif /* PROGPATH_IMPLEMENTATION */
 
 #endif /* PROGPATH_H */

@@ -12,7 +12,6 @@
  */
 
 #include "progpath.h"
-#include "progpath_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>

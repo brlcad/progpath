@@ -149,15 +149,15 @@ function(CHECK_PROG_PATH)
   
 endfunction(CHECK_PROG_PATH)
 
-# Validate that every HAVE_* symbol is consistent across the three
-# key files: progpath_config.h.in (template), CheckProgPath.cmake
-# (detection), and progpath.cpp (usage).  Warns at configure time
-# if any symbol falls through the cracks.
-function(VALIDATE_CONFIG_SYMBOLS config_template cmake_module source_file)
+# Validate that every HAVE_* symbol is consistent across the header
+# template, the CMake detection module, and the implementation usage
+# inside the header template.  Warns at configure time if any symbol
+# falls through the cracks.
+function(VALIDATE_CONFIG_SYMBOLS header_template cmake_module source_file)
   set(_warnings)
 
-  # 1. Read progpath_config.h.in — extract HAVE_* from #cmakedefine lines
-  file(READ "${config_template}" _config_content)
+  # 1. Read progpath.h.in — extract HAVE_* from #cmakedefine lines
+  file(READ "${header_template}" _config_content)
   string(REGEX MATCHALL "HAVE_[A-Za-z0-9_]+" _config_symbols "${_config_content}")
   list(REMOVE_DUPLICATES _config_symbols)
 
@@ -175,7 +175,7 @@ function(VALIDATE_CONFIG_SYMBOLS config_template cmake_module source_file)
   foreach(_sym ${_config_symbols})
     list(FIND _cmake_symbols "${_sym}" _idx)
     if (_idx EQUAL -1)
-      list(APPEND _warnings "CONFIG_NO_CMAKE: ${_sym} in ${config_template} but no CMake check")
+      list(APPEND _warnings "CONFIG_NO_CMAKE: ${_sym} in ${header_template} but no CMake check")
     endif()
   endforeach()
 
@@ -183,7 +183,7 @@ function(VALIDATE_CONFIG_SYMBOLS config_template cmake_module source_file)
   foreach(_sym ${_source_symbols})
     list(FIND _config_symbols "${_sym}" _idx)
     if (_idx EQUAL -1)
-      list(APPEND _warnings "SOURCE_NO_CONFIG: ${_sym} used in ${source_file} but not in ${config_template}")
+      list(APPEND _warnings "SOURCE_NO_CONFIG: ${_sym} used in ${source_file} but not in ${header_template}")
     endif()
   endforeach()
 
