@@ -31,6 +31,11 @@ else ()
   list(APPEND PP_CFLAGS ${PP_CFLAGS_NOT_MSVC})
 endif ()
 
+if (CMAKE_C_COMPILER_ID STREQUAL "SunPro" OR CMAKE_CXX_COMPILER_ID STREQUAL "SunPro")
+  # SunPro C compiler doesn't automatically link the C++ runtime when linking C executables against C++ libraries
+  link_libraries(Crun)
+endif ()
+
 # MSVC warns on standard CRT entry points such as getenv(), strncpy(),
 # fopen(), and _open() unless the secure-CRT opt-out is defined before
 # compilation.  Set it once here so it applies uniformly to the library
