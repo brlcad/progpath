@@ -147,6 +147,16 @@ function(CHECK_PROG_PATH)
   check_struct_has_member("struct psinfo" pr_argv sys/procfs.h HAVE_STRUCT_PSINFO)
   check_struct_has_member("struct prpsinfo" pr_fname sys/procfs.h HAVE_STRUCT_PRPSINFO)
   
+  # C constructor attributes/pragmas for auto initialization
+  check_c_source_compiles(
+    "static void init(void) {}\n__attribute__((constructor)) static void my_init(void) { init(); }\nint main(void) { return 0; }"
+    HAVE_ATTRIBUTE_CONSTRUCTOR
+  )
+  check_c_source_compiles(
+    "#pragma section(\".CRT$XCU\",read)\nstatic void init(void) {}\n__declspec(allocate(\".CRT$XCU\")) void (* const init_ptr)(void) = init;\nint main(void) { return 0; }"
+    HAVE_PRAGMA_SECTION
+  )
+  
 endfunction(CHECK_PROG_PATH)
 
 # Validate that every HAVE_* symbol is consistent across the header

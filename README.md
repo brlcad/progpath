@@ -68,10 +68,10 @@ how you integrate:
 | Build mode | Init behavior |
 |---|---|
 | Generated `progpath.h` implementation compiled as **C++** | **Automatic** — C++ static constructor fires before `main()`. Nothing to do. |
-| Generated `progpath.h` implementation compiled as **C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`.  call before any `chdir()`. |
-| Shared library (`.so`/`.dylib`/`.dll`) | **Automatic** — C++ static constructor fires before `main()`. nothing to do. |
+| Generated `progpath.h` implementation compiled as **C** | **Automatic** — C static constructor fires before `main()`. Nothing to do. |
+| Shared library (`.so`/`.dylib`/`.dll`) | **Automatic** — static constructor fires before `main()`. nothing to do. |
 | Static lib, linked from **C++** | **Automatic** — C++ runtime fires the constructor. |
-| Static lib, linked from **pure C** | **Manual** — initial path is captured on first call to `progipwd()` or `progpath()`. call before any `chdir()`.|
+| Static lib, linked from **pure C** | **Automatic** — C static constructor fires before `main()`. Nothing to do.|
 
 ## notes and limitations
 
