@@ -66,3 +66,12 @@ set_tests_properties(progpath_bin_output PROPERTIES
   PASS_REGULAR_EXPRESSION "Program executable is \\[ ([A-Za-z]:\\\\|/)"
   FAIL_REGULAR_EXPRESSION  "ERROR:"
 )
+
+add_executable(test_c_init test_c_init.c)
+target_link_libraries(test_c_init progpath-static)
+target_include_directories(test_c_init PRIVATE ${PROJECT_SOURCE_DIR})
+add_test(NAME test_c_init COMMAND test_c_init)
+set_tests_properties(test_c_init PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  ENVIRONMENT "PWD=${CMAKE_CURRENT_BINARY_DIR}"
+)

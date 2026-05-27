@@ -58,12 +58,12 @@ int main(void) {
     fprintf(stderr, "FAIL: progipwd() returned NULL\n");
     return 1;
   }
-  if (strcmp(ipwd, lazy_cwd) != 0) {
-    fprintf(stderr, "FAIL: progipwd() [%s] != lazy cwd [%s]\n", ipwd, lazy_cwd);
+  if (strcmp(ipwd, start_cwd) != 0) {
+    fprintf(stderr, "FAIL: progipwd() [%s] != pre-main cwd [%s]\n", ipwd, start_cwd);
     return 1;
   }
-  if (strcmp(ipwd, start_cwd) == 0) {
-    fprintf(stderr, "FAIL: progipwd() unexpectedly captured the pre-main cwd\n");
+  if (strcmp(ipwd, lazy_cwd) == 0) {
+    fprintf(stderr, "FAIL: progipwd() unexpectedly captured the late chdir cwd\n");
     return 1;
   }
 
@@ -77,6 +77,6 @@ int main(void) {
     return 1;
   }
 
-  printf("PASS: pure C single-header build uses documented lazy init [%s]\n", ipwd);
+  printf("PASS: pure C single-header build uses documented auto init [%s]\n", ipwd);
   return 0;
 }
