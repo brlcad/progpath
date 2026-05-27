@@ -1272,6 +1272,16 @@ struct progpath_initializer {
 static progpath_initializer pp;
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((constructor)) void progpath_c_initializer(void) {
+  proginit();
+}
+#elif defined(_MSC_VER)
+#  pragma section(".CRT$XCU",read)
+__declspec(allocate(".CRT$XCU")) void (* const progpath_c_initializer)(void) = proginit;
+#endif
+
 #endif /* PROGPATH_IMPLEMENTATION */
+
 
 #endif /* PROGPATH_H */
