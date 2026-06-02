@@ -1272,7 +1272,14 @@ __attribute__((constructor)) void progpath_c_initializer(void) {
   proginit();
 }
 #elif defined(HAVE_PRAGMA_SECTION)
-#  pragma section(".CRT$XCU",read)
+#  if defined(read)
+#    define read_saved read
+#    undef(read)
+#  endif
+#  pragma section(".CRT$XCU", read)
+#  if defined(read_saved) && !defined(read)
+#    define read read_saved
+#  endif
 __declspec(allocate(".CRT$XCU")) void (* const progpath_c_initializer)(void) = proginit;
 #endif
 
