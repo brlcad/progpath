@@ -1274,9 +1274,9 @@ __attribute__((constructor)) void progpath_c_initializer(void) {
 #elif defined(HAVE_PRAGMA_SECTION)
 #  if defined(read)
 #    define read_saved read
-#    undef(read)
+#    undef read
 #  endif
-#  pragma section(".CRT$XCU", read)
+#  pragma section(".CRT$XCU",read)
 #  if defined(read_saved) && !defined(read)
 #    define read read_saved
 #  endif
