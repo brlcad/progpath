@@ -114,7 +114,7 @@ int main() {
   }
 
   std::strncpy(resolved, "subdir/tool", sizeof(resolved) - 1);
-  resolve_to_full_path(resolved, sizeof(resolved));
+  resolve_to_full_path(real_dir, resolved, sizeof(resolved));
 
   if (!realpath("subdir/tool", expected)) {
     std::fprintf(stderr, "FAIL: realpath(subdir/tool) failed\n");
