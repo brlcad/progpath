@@ -389,7 +389,7 @@ static int path_has_separator(const char *path) {
   return 0;
 }
 
-static void resolve_to_full_path(char *buf, size_t buflen) {
+static void resolve_to_full_path(const char *ipwd, char *buf, size_t buflen) {
   char rbuf[MAXPATHLEN] = {0};
 
   if (!buf || buflen < 1)
@@ -399,6 +399,14 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
     buflen = MAXPATHLEN;
   strncpy(rbuf, buf, buflen - 1);
   rbuf[MAXPATHLEN - 1] = '\0';
+
+  if (!is_path_absolute(rbuf)) {
+    if (rbuf[0] == '.' || path_has_separator(rbuf)) {
+      char tmp[MAXPATHLEN] = {0};
+      snprintf(tmp, MAXPATHLEN, "%s/%s", (ipwd && ipwd[0]) ? ipwd : ".", rbuf);
+      strncpy(rbuf, tmp, MAXPATHLEN - 1);
+    }
+  }
 
   if (is_path_absolute(rbuf) || rbuf[0] == '.' || path_has_separator(rbuf)) {
 #ifdef HAVE_REALPATH
@@ -428,10 +436,10 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
         char *dir = strtok(path_dup, ":");
         while (dir) {
           char full_path[MAXPATHLEN] = {0};
-          int written = snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
-          if (written < 0 || written >= MAXPATHLEN) {
-            dir = strtok(NULL, ":");
-            continue;
+          if (!is_path_absolute(dir) && ipwd && ipwd[0]) {
+             snprintf(full_path, MAXPATHLEN, "%s/%s/%s", ipwd, dir, rbuf);
+          } else {
+             snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
           }
           if (access(full_path, X_OK) == 0) {
             strncpy(rbuf, full_path, MAXPATHLEN - 1);
@@ -446,12 +454,18 @@ static void resolve_to_full_path(char *buf, size_t buflen) {
   }
 
   if (is_path_absolute(rbuf)) {
+#ifdef HAVE_REALPATH
+    char rpbuf[MAXPATHLEN] = {0};
+    if (realpath(rbuf, rpbuf)) {
+      strncpy(rbuf, rpbuf, MAXPATHLEN - 1);
+    }
+#endif
     strncpy(buf, rbuf, buflen - 1);
     buf[buflen - 1] = '\0';
   }
 }
 
-static void finalize(struct method m, char *buf, size_t buflen, const char *result) {
+static void finalize(struct method m, const char *ipwd, char *buf, size_t buflen, const char *result) {
   if (!buf || buflen < 1)
     return;
 
@@ -462,7 +476,7 @@ static void finalize(struct method m, char *buf, size_t buflen, const char *resu
     return;
 
   print_method(m, buf);
-  resolve_to_full_path(buf, buflen);
+  resolve_to_full_path(ipwd, buf, buflen);
   print_method(m, buf);
 }
 
@@ -508,7 +522,7 @@ static char *progcwd(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("getcwd");
     getcwd(cwd, MAXPATHLEN);
-    finalize(m, mbuf, MAXPATHLEN, cwd);
+    finalize(m, NULL, mbuf, MAXPATHLEN, cwd);
     if (we_done_yet(m, &buf, buflen, mbuf))
       return buf;
   }
@@ -520,7 +534,7 @@ static char *progcwd(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("_getcwd");
     _getcwd(cwd, MAXPATHLEN);
-    finalize(m, mbuf, MAXPATHLEN, cwd);
+    finalize(m, NULL, mbuf, MAXPATHLEN, cwd);
     if (we_done_yet(m, &buf, buflen, mbuf))
       return buf;
   }
@@ -532,7 +546,7 @@ static char *progcwd(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("realpath(.)");
     realpath(".", cwd);
-    finalize(m, mbuf, MAXPATHLEN, cwd);
+    finalize(m, NULL, mbuf, MAXPATHLEN, cwd);
     if (we_done_yet(m, &buf, buflen, mbuf))
       return buf;
   }
@@ -544,7 +558,7 @@ static char *progcwd(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("GetCurrentDirectory");
     GetCurrentDirectory(MAXPATHLEN, cwd);
-    finalize(m, mbuf, MAXPATHLEN, cwd);
+    finalize(m, NULL, mbuf, MAXPATHLEN, cwd);
     if (we_done_yet(m, &buf, buflen, mbuf))
       return buf;
   }
@@ -561,24 +575,6 @@ static char *progcwd(char *buf, size_t buflen) {
   return NULL;
 }
 
-static void chdir_if_diff(const char *wd) {
-  char cwd[MAXPATHLEN] = {0};
-  int ret;
-
-  if (!wd || wd[0] == '\0')
-    return;
-
-  progcwd(cwd, MAXPATHLEN);
-
-  if (strncmp(cwd, wd, MAXPATHLEN - 1) == 0)
-    return;
-
-  ret = chdir(wd);
-  if (ret != 0) {
-    pp_print("WARNING: chdir(%s) failed\n", wd);
-    perror("chdir");
-  }
-}
 
 #ifdef __cplusplus
 extern "C" {
@@ -604,7 +600,7 @@ char *progipwd(char *buf, size_t buflen) {
     if (pwd) {
       strncpy(cwd, pwd, MAXPATHLEN - 1);
       cwd[MAXPATHLEN - 1] = '\0';
-      finalize(m, mbuf, MAXPATHLEN, cwd);
+      finalize(m, NULL, mbuf, MAXPATHLEN, cwd);
       if (we_done_yet(m, &buf, buflen, mbuf))
         return buf;
     }
@@ -617,7 +613,7 @@ char *progipwd(char *buf, size_t buflen) {
     pp_print("progipwd() using the current directory\n");
 
     progcwd(cwd, MAXPATHLEN);
-    finalize(im, pbuf, MAXPATHLEN, cwd);
+    finalize(im, NULL, pbuf, MAXPATHLEN, cwd);
     if (we_done_yet(im, &buf, buflen, pbuf))
       return buf;
   }
@@ -641,16 +637,14 @@ char *progpath(char *buf, size_t buflen) {
 
   pp_print("cwd=%s ipwd=%s\n", cwd, ipwd);
 
-  chdir_if_diff(ipwd);
 
 #ifdef HAVE_GETPROGNAME
   {
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getprogname();
     struct method m = METHOD("getprogname");
-    finalize(m, mbuf, MAXPATHLEN, argv0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -661,9 +655,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     const char *argv0 = getexecname();
     struct method m = METHOD("getexecname");
-    finalize(m, mbuf, MAXPATHLEN, argv0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -675,10 +668,9 @@ char *progpath(char *buf, size_t buflen) {
     DWORD ret = GetModuleFileNameA(NULL, mbuf, MAXPATHLEN);
     struct method m = METHOD("GetModuleFileNameA");
     if (ret > 0 && ret < MAXPATHLEN) {
-      finalize(m, mbuf, MAXPATHLEN, NULL);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -690,9 +682,8 @@ char *progpath(char *buf, size_t buflen) {
     char *argv0 = NULL;
     struct method m = METHOD("_get_pgmptr");
     _get_pgmptr(&argv0);
-    finalize(m, mbuf, MAXPATHLEN, argv0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -703,9 +694,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("proc_pidpath");
     (void)proc_pidpath(getpid(), mbuf, buflen);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -717,10 +707,9 @@ char *progpath(char *buf, size_t buflen) {
     if (program_invocation_name) {
       char mbuf[MAXPATHLEN] = {0};
       struct method m = METHOD("program_invocation_name");
-      finalize(m, mbuf, MAXPATHLEN, program_invocation_name);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_name);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -732,10 +721,9 @@ char *progpath(char *buf, size_t buflen) {
     if (program_invocation_short_name) {
       char mbuf[MAXPATHLEN] = {0};
       struct method m = METHOD("program_invocation_short_name");
-      finalize(m, mbuf, MAXPATHLEN, program_invocation_short_name);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_short_name);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -747,10 +735,9 @@ char *progpath(char *buf, size_t buflen) {
     if (__argv) {
       char mbuf[MAXPATHLEN] = {0};
       struct method m = METHOD("__argv");
-      finalize(m, mbuf, MAXPATHLEN, __argv[0]);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __argv[0]);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -762,10 +749,9 @@ char *progpath(char *buf, size_t buflen) {
     if (__progname_full) {
       char mbuf[MAXPATHLEN] = {0};
       struct method m = METHOD("__progname_full");
-      finalize(m, mbuf, MAXPATHLEN, __progname_full);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname_full);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -777,10 +763,9 @@ char *progpath(char *buf, size_t buflen) {
     if (__progname) {
       char mbuf[MAXPATHLEN] = {0};
       struct method m = METHOD("__progname");
-      finalize(m, mbuf, MAXPATHLEN, __progname);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -791,9 +776,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     char *argv0 = (char *)getauxval(AT_EXECFN);
     struct method m = METHOD("getauxval");
-    finalize(m, mbuf, MAXPATHLEN, argv0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -806,9 +790,8 @@ char *progpath(char *buf, size_t buflen) {
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
     struct method m = METHOD("sysctl(KERN_PROC)");
     sysctl(mib, 4, mbuf, &len, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -825,9 +808,8 @@ char *progpath(char *buf, size_t buflen) {
         len = MAXPATHLEN - 1;
       mbuf[len] = '\0';
     }
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -851,11 +833,10 @@ char *progpath(char *buf, size_t buflen) {
       mib[3] = -1;
       pbufsz = (size_t)argmax;
       sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
-      finalize(m, mbuf, MAXPATHLEN, pbuf + sizeof(int));
+      finalize(m, ipwd, mbuf, MAXPATHLEN, pbuf + sizeof(int));
       free(pbuf);
     }
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -868,9 +849,8 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN - 1;
     struct method m = METHOD("sysctl(KERN_PROCNAME)");
     sysctl(mib, 2, mbuf, &len, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -887,11 +867,10 @@ char *progpath(char *buf, size_t buflen) {
     retargs = (char **)calloc(len, sizeof(char *));
     if (retargs) {
       sysctl(mib, 4, retargs, &len, NULL, 0);
-      finalize(m, mbuf, MAXPATHLEN, retargs[0]);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, retargs[0]);
       free(retargs);
     }
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -903,9 +882,8 @@ char *progpath(char *buf, size_t buflen) {
     size_t len = MAXPATHLEN - 1;
     struct method m = METHOD("sysctlbyname(kern.procname)");
     sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -917,9 +895,8 @@ char *progpath(char *buf, size_t buflen) {
     uint32_t ulen = MAXPATHLEN - 1;
     struct method m = METHOD("_NSGetExecutablePath");
     _NSGetExecutablePath(mbuf, &ulen);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -930,9 +907,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("find_path");
     find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH, NULL, mbuf, MAXPATHLEN);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -943,9 +919,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/self/exe)");
     readlink("/proc/self/exe", mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -960,10 +935,9 @@ char *progpath(char *buf, size_t buflen) {
     if (fd >= 0) {
       read(fd, mbuf, MAXPATHLEN - 1);
       close(fd);
-      finalize(m, mbuf, MAXPATHLEN, NULL);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -974,9 +948,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/curproc/file)");
     readlink("/proc/curproc/file", mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -987,9 +960,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/curproc/exe)");
     readlink("/proc/curproc/exe", mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1002,9 +974,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("readlink(/proc/$PID/file)");
     snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/file", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1023,12 +994,11 @@ char *progpath(char *buf, size_t buflen) {
     if (fd >= 0) {
       if (read(fd, &p, sizeof(p)) == sizeof(p)) {
         argv0 = (*(char ***)((intptr_t)p.pr_argv))[0];
-        finalize(m, mbuf, MAXPATHLEN, argv0);
+        finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
       }
       close(fd);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -1048,10 +1018,9 @@ char *progpath(char *buf, size_t buflen) {
       ioctl(fd, PIOCPSINFO, &p);
       close(fd);
       argv0 = p.pr_fname;
-      finalize(m, mbuf, MAXPATHLEN, argv0);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -1064,9 +1033,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("readlink(/proc/$PID/cmdline)");
     snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/cmdline", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1083,10 +1051,9 @@ char *progpath(char *buf, size_t buflen) {
     if (fd >= 0) {
       read(fd, mbuf, MAXPATHLEN - 1);
       close(fd);
-      finalize(m, mbuf, MAXPATHLEN, NULL);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -1099,9 +1066,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("readlink(/proc/$PID/path/a.out)");
     snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/path/a.out", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1112,9 +1078,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/self/path/a.out)");
     readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1125,9 +1090,8 @@ char *progpath(char *buf, size_t buflen) {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("readlink(/proc/pinfo)");
     readlink("/proc/pinfo", mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1140,9 +1104,8 @@ char *progpath(char *buf, size_t buflen) {
     struct method m = METHOD("readlink(/proc/$PID)");
     snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d", getpid());
     readlink(pbuf, mbuf, MAXPATHLEN - 1);
-    finalize(m, mbuf, MAXPATHLEN, NULL);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1163,10 +1126,9 @@ char *progpath(char *buf, size_t buflen) {
     }
 
     if (main_fname) {
-      finalize(m, mbuf, MAXPATHLEN, main_fname);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, main_fname);
       if (we_done_yet(m, &buf, buflen, mbuf)) {
-        chdir_if_diff(cwd);
-        return buf;
+          return buf;
       }
     }
   }
@@ -1186,13 +1148,12 @@ char *progpath(char *buf, size_t buflen) {
           continue;
         if (getpid() == (pid_t)pinfo[i].pi_pid) {
           argv0 = pinfo[i].pi_comm;
-          finalize(m, mbuf, MAXPATHLEN, argv0);
+          finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
           break;
         }
       }
     }
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1217,14 +1178,13 @@ char *progpath(char *buf, size_t buflen) {
           continue;
         if (getpid() == (int)pentry[i].pi_pid) {
           argv0 = pentry[i].pi_comm;
-          finalize(m, mbuf, MAXPATHLEN, argv0);
+          finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
           break;
         }
       }
     }
     free(pentry);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
@@ -1233,12 +1193,11 @@ char *progpath(char *buf, size_t buflen) {
   {
     struct method m = METHOD("UNKNOWN");
     if (we_done_yet(m, &buf, buflen, NULL)) {
-      chdir_if_diff(cwd);
       return buf;
     }
   }
 
-  chdir_if_diff(cwd);
+
 
   if (buf && buf[0] != '\0')
     return buf;
