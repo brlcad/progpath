@@ -637,30 +637,14 @@ char *progpath(char *buf, size_t buflen) {
 
   pp_print("cwd=%s ipwd=%s\n", cwd, ipwd);
 
-
-#ifdef HAVE_GETPROGNAME
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    const char *argv0 = getprogname();
-    struct method m = METHOD("getprogname");
-    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#ifdef HAVE_GETEXECNAME
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    const char *argv0 = getexecname();
-    struct method m = METHOD("getexecname");
-    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
+  /*
+   * Tier 1: authoritative operating-system interfaces that identify the
+   * running executable directly.  Keep these ahead of argv/process-name
+   * methods: a basename resolved through PATH can name a different program.
+   *
+   * Several of these interfaces coexist on a platform.  Their relative
+   * ordering is intentionally the same as the historical fallback order.
+   */
 
 #ifdef HAVE_GETMODULEFILENAMEA
   {
@@ -676,107 +660,12 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-#ifdef HAVE__GET_PGMPTR
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    char *argv0 = NULL;
-    struct method m = METHOD("_get_pgmptr");
-    _get_pgmptr(&argv0);
-    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
 #ifdef HAVE_PROC_PIDPATH
   {
     char mbuf[MAXPATHLEN] = {0};
     struct method m = METHOD("proc_pidpath");
-    (void)proc_pidpath(getpid(), mbuf, buflen);
+    (void)proc_pidpath(getpid(), mbuf, MAXPATHLEN);
     finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
-  {
-    extern char *program_invocation_name;
-    if (program_invocation_name) {
-      char mbuf[MAXPATHLEN] = {0};
-      struct method m = METHOD("program_invocation_name");
-      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_name);
-      if (we_done_yet(m, &buf, buflen, mbuf)) {
-          return buf;
-      }
-    }
-  }
-#endif
-
-#ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
-  {
-    extern char *program_invocation_short_name;
-    if (program_invocation_short_name) {
-      char mbuf[MAXPATHLEN] = {0};
-      struct method m = METHOD("program_invocation_short_name");
-      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_short_name);
-      if (we_done_yet(m, &buf, buflen, mbuf)) {
-          return buf;
-      }
-    }
-  }
-#endif
-
-#ifdef HAVE_DECL___ARGV
-  {
-    extern char **__argv;
-    if (__argv) {
-      char mbuf[MAXPATHLEN] = {0};
-      struct method m = METHOD("__argv");
-      finalize(m, ipwd, mbuf, MAXPATHLEN, __argv[0]);
-      if (we_done_yet(m, &buf, buflen, mbuf)) {
-          return buf;
-      }
-    }
-  }
-#endif
-
-#ifdef HAVE_DECL___PROGNAME_FULL
-  {
-    extern char *__progname_full;
-    if (__progname_full) {
-      char mbuf[MAXPATHLEN] = {0};
-      struct method m = METHOD("__progname_full");
-      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname_full);
-      if (we_done_yet(m, &buf, buflen, mbuf)) {
-          return buf;
-      }
-    }
-  }
-#endif
-
-#ifdef HAVE_DECL___PROGNAME
-  {
-    extern char *__progname;
-    if (__progname) {
-      char mbuf[MAXPATHLEN] = {0};
-      struct method m = METHOD("__progname");
-      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname);
-      if (we_done_yet(m, &buf, buflen, mbuf)) {
-          return buf;
-      }
-    }
-  }
-#endif
-
-#ifdef HAVE_GETAUXVAL
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    char *argv0 = (char *)getauxval(AT_EXECFN);
-    struct method m = METHOD("getauxval");
-    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       return buf;
     }
@@ -808,80 +697,6 @@ char *progpath(char *buf, size_t buflen) {
         len = MAXPATHLEN - 1;
       mbuf[len] = '\0';
     }
-    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    int mib[4] = {CTL_KERN, KERN_ARGMAX, -1, -1};
-    int argmax;
-    size_t argmaxsz = sizeof(argmax);
-    char *pbuf;
-    size_t pbufsz;
-    struct method m = METHOD("sysctl(KERN_PROCARGS2)");
-    sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
-    pbuf = (char *)calloc(argmax, sizeof(char));
-    if (pbuf) {
-      mib[0] = CTL_KERN;
-      mib[1] = KERN_PROCARGS2;
-      mib[2] = getpid();
-      mib[3] = -1;
-      pbufsz = (size_t)argmax;
-      sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
-      finalize(m, ipwd, mbuf, MAXPATHLEN, pbuf + sizeof(int));
-      free(pbuf);
-    }
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    int mib[4] = {CTL_KERN, KERN_PROCNAME, -1, -1};
-    size_t len = MAXPATHLEN - 1;
-    struct method m = METHOD("sysctl(KERN_PROCNAME)");
-    sysctl(mib, 2, mbuf, &len, NULL, 0);
-    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV) && !defined(HAVE_DECL_KERN_PROC_PATHNAME)
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
-    char **retargs;
-    size_t len = MAXPATHLEN - 1;
-    struct method m = METHOD("sysctl(KERN_PROCNAME)");
-    sysctl(mib, 4, NULL, &len, NULL, 0);
-    retargs = (char **)calloc(len, sizeof(char *));
-    if (retargs) {
-      sysctl(mib, 4, retargs, &len, NULL, 0);
-      finalize(m, ipwd, mbuf, MAXPATHLEN, retargs[0]);
-      free(retargs);
-    }
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#if defined(HAVE_SYSCTLBYNAME)
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    size_t len = MAXPATHLEN - 1;
-    struct method m = METHOD("sysctlbyname(kern.procname)");
-    sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
     finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
     if (we_done_yet(m, &buf, buflen, mbuf)) {
       return buf;
@@ -981,6 +796,227 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char pbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/$PID/path/a.out)");
+    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/path/a.out", getpid());
+    readlink(pbuf, mbuf, MAXPATHLEN - 1);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_READLINK
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    struct method m = METHOD("readlink(/proc/self/path/a.out)");
+    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN - 1);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+  /* Tier 2: invocation names and process names that may require PATH. */
+
+#ifdef HAVE_GETPROGNAME
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = getprogname();
+    struct method m = METHOD("getprogname");
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_GETEXECNAME
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    const char *argv0 = getexecname();
+    struct method m = METHOD("getexecname");
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE__GET_PGMPTR
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = NULL;
+    struct method m = METHOD("_get_pgmptr");
+    _get_pgmptr(&argv0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL_PROGRAM_INVOCATION_NAME
+  {
+    extern char *program_invocation_name;
+    if (program_invocation_name) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("program_invocation_name");
+      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_name);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+          return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+  {
+    extern char *program_invocation_short_name;
+    if (program_invocation_short_name) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("program_invocation_short_name");
+      finalize(m, ipwd, mbuf, MAXPATHLEN, program_invocation_short_name);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+          return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___ARGV
+  {
+    extern char **__argv;
+    if (__argv) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__argv");
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __argv[0]);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+          return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___PROGNAME_FULL
+  {
+    extern char *__progname_full;
+    if (__progname_full) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__progname_full");
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname_full);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+          return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_DECL___PROGNAME
+  {
+    extern char *__progname;
+    if (__progname) {
+      char mbuf[MAXPATHLEN] = {0};
+      struct method m = METHOD("__progname");
+      finalize(m, ipwd, mbuf, MAXPATHLEN, __progname);
+      if (we_done_yet(m, &buf, buflen, mbuf)) {
+          return buf;
+      }
+    }
+  }
+#endif
+
+#ifdef HAVE_GETAUXVAL
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    char *argv0 = (char *)getauxval(AT_EXECFN);
+    struct method m = METHOD("getauxval");
+    finalize(m, ipwd, mbuf, MAXPATHLEN, argv0);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROCARGS2)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_ARGMAX, -1, -1};
+    int argmax;
+    size_t argmaxsz = sizeof(argmax);
+    char *pbuf;
+    size_t pbufsz;
+    struct method m = METHOD("sysctl(KERN_PROCARGS2)");
+    sysctl(mib, 2, &argmax, &argmaxsz, NULL, 0);
+    pbuf = (char *)calloc(argmax, sizeof(char));
+    if (pbuf) {
+      mib[0] = CTL_KERN;
+      mib[1] = KERN_PROCARGS2;
+      mib[2] = getpid();
+      mib[3] = -1;
+      pbufsz = (size_t)argmax;
+      sysctl(mib, 3, pbuf, &pbufsz, NULL, 0);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, pbuf + sizeof(int));
+      free(pbuf);
+    }
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC) && defined(HAVE_DECL_KERN_PROCNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROCNAME, -1, -1};
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctl(KERN_PROCNAME)");
+    sysctl(mib, 2, mbuf, &len, NULL, 0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_DECL_CTL_KERN) && defined(HAVE_DECL_KERN_PROC_ARGS) && defined(HAVE_DECL_KERN_PROC_ARGV) && !defined(HAVE_DECL_KERN_PROC_PATHNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    int mib[4] = {CTL_KERN, KERN_PROC_ARGS, getpid(), KERN_PROC_ARGV};
+    char **retargs;
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctl(KERN_PROCNAME)");
+    sysctl(mib, 4, NULL, &len, NULL, 0);
+    retargs = (char **)calloc(len, sizeof(char *));
+    if (retargs) {
+      sysctl(mib, 4, retargs, &len, NULL, 0);
+      finalize(m, ipwd, mbuf, MAXPATHLEN, retargs[0]);
+      free(retargs);
+    }
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
+#if defined(HAVE_SYSCTLBYNAME)
+  {
+    char mbuf[MAXPATHLEN] = {0};
+    size_t len = MAXPATHLEN - 1;
+    struct method m = METHOD("sysctlbyname(kern.procname)");
+    sysctlbyname("kern.procname", mbuf, &len, NULL, 0);
+    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
+    if (we_done_yet(m, &buf, buflen, mbuf)) {
+      return buf;
+    }
+  }
+#endif
+
 #ifdef HAVE_STRUCT_PSINFO
   {
     char mbuf[MAXPATHLEN] = {0};
@@ -1055,32 +1091,6 @@ char *progpath(char *buf, size_t buflen) {
       if (we_done_yet(m, &buf, buflen, mbuf)) {
           return buf;
       }
-    }
-  }
-#endif
-
-#ifdef HAVE_READLINK
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    char pbuf[MAXPATHLEN] = {0};
-    struct method m = METHOD("readlink(/proc/$PID/path/a.out)");
-    snprintf(pbuf, MAXPATHLEN - 1, "/proc/%d/path/a.out", getpid());
-    readlink(pbuf, mbuf, MAXPATHLEN - 1);
-    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
-    }
-  }
-#endif
-
-#ifdef HAVE_READLINK
-  {
-    char mbuf[MAXPATHLEN] = {0};
-    struct method m = METHOD("readlink(/proc/self/path/a.out)");
-    readlink("/proc/self/path/a.out", mbuf, MAXPATHLEN - 1);
-    finalize(m, ipwd, mbuf, MAXPATHLEN, NULL);
-    if (we_done_yet(m, &buf, buflen, mbuf)) {
-      return buf;
     }
   }
 #endif

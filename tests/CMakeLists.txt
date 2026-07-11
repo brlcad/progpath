@@ -20,6 +20,15 @@ target_link_libraries(test_correctness progpath-static)
 target_include_directories(test_correctness PRIVATE ${PROJECT_SOURCE_DIR})
 add_test(NAME test_correctness COMMAND test_correctness)
 
+add_executable(test_method_priority test_method_priority.c)
+target_link_libraries(test_method_priority progpath-static)
+target_include_directories(test_method_priority PRIVATE ${PROJECT_SOURCE_DIR})
+add_test(NAME test_method_priority COMMAND test_method_priority)
+set_tests_properties(test_method_priority PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  ENVIRONMENT "PROGPATH_DEBUG=0;PWD=${CMAKE_CURRENT_BINARY_DIR}"
+)
+
 add_executable(test_resolve_path test_resolve_path.cpp)
 target_compile_definitions(test_resolve_path PRIVATE PROGPATH_STATIC)
 target_include_directories(test_resolve_path PRIVATE
