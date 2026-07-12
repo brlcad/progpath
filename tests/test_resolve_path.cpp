@@ -11,6 +11,7 @@
 #else
 #  include <sys/stat.h>
 #  include <unistd.h>
+#  define make_executable(path) chmod(path, 0755)
 #  define mkdir_compat(path) mkdir(path, 0777)
 #  define setenv_compat(name, value) setenv(name, value, 1)
 #  define unsetenv_compat(name) unsetenv(name)
@@ -68,6 +69,8 @@ int main() {
   char shadow_dir[MAXPATHLEN] = {0};
   char shadow_subdir[MAXPATHLEN] = {0};
   char shadow_tool[MAXPATHLEN] = {0};
+  char real_bare_tool[MAXPATHLEN] = {0};
+  char shadow_bare_tool[MAXPATHLEN] = {0};
   char resolved[MAXPATHLEN] = {0};
   char expected[MAXPATHLEN] = {0};
   char *saved_path = NULL;
@@ -93,14 +96,18 @@ int main() {
       join_path(real_tool, sizeof(real_tool), real_subdir, "tool") != 0 ||
       join_path(shadow_dir, sizeof(shadow_dir), base_dir, "shadow") != 0 ||
       join_path(shadow_subdir, sizeof(shadow_subdir), shadow_dir, "subdir") != 0 ||
-      join_path(shadow_tool, sizeof(shadow_tool), shadow_subdir, "tool") != 0)
+      join_path(shadow_tool, sizeof(shadow_tool), shadow_subdir, "tool") != 0 ||
+      join_path(real_bare_tool, sizeof(real_bare_tool), real_dir, "bare-tool") != 0 ||
+      join_path(shadow_bare_tool, sizeof(shadow_bare_tool), shadow_dir, "bare-tool") != 0)
     goto cleanup;
 
   if (ensure_dir(base_dir) != 0 || ensure_dir(real_dir) != 0 || ensure_dir(real_subdir) != 0 ||
       ensure_dir(shadow_dir) != 0 || ensure_dir(shadow_subdir) != 0)
     goto cleanup;
 
-  if (touch_file(real_tool) != 0 || touch_file(shadow_tool) != 0)
+  if (touch_file(real_tool) != 0 || touch_file(shadow_tool) != 0 ||
+      touch_file(real_bare_tool) != 0 || touch_file(shadow_bare_tool) != 0 ||
+      make_executable(real_bare_tool) != 0 || make_executable(shadow_bare_tool) != 0)
     goto cleanup;
 
   if (chdir(real_dir) != 0) {
@@ -127,6 +134,27 @@ int main() {
   }
 
   std::printf("PASS: explicit relative paths resolve before PATH search [%s]\n", resolved);
+
+  if (setenv_compat("PATH", ":shadow") != 0) {
+    std::fprintf(stderr, "FAIL: set PATH with empty component failed\n");
+    goto cleanup;
+  }
+
+  std::memset(resolved, 0, sizeof(resolved));
+  std::strncpy(resolved, "bare-tool", sizeof(resolved) - 1);
+  resolve_to_full_path(real_dir, resolved, sizeof(resolved));
+
+  if (!realpath(real_bare_tool, expected)) {
+    std::fprintf(stderr, "FAIL: realpath(%s) failed\n", real_bare_tool);
+    goto cleanup;
+  }
+
+  if (std::strcmp(resolved, expected) != 0) {
+    std::fprintf(stderr, "FAIL: empty PATH component resolved [%s] expected [%s]\n", resolved, expected);
+    goto cleanup;
+  }
+
+  std::printf("PASS: empty PATH component resolves against the initial directory [%s]\n", resolved);
   ret = 0;
 
 cleanup:
