@@ -433,10 +433,17 @@ static void resolve_to_full_path(const char *ipwd, char *buf, size_t buflen) {
       char *path_dup = strdup(path_env);
       if (path_dup) {
 #ifdef HAVE_UNISTD_H
-        char *dir = strtok(path_dup, ":");
-        while (dir) {
+        char *dir = path_dup;
+        for (;;) {
+          char *separator = strchr(dir, ':');
           char full_path[MAXPATHLEN] = {0};
-          if (!is_path_absolute(dir) && ipwd && ipwd[0]) {
+          if (separator)
+            *separator = '\0';
+
+          /* An empty PATH component denotes the current directory. */
+          if (dir[0] == '\0') {
+            snprintf(full_path, MAXPATHLEN, "%s/%s", (ipwd && ipwd[0]) ? ipwd : ".", rbuf);
+          } else if (!is_path_absolute(dir) && ipwd && ipwd[0]) {
              snprintf(full_path, MAXPATHLEN, "%s/%s/%s", ipwd, dir, rbuf);
           } else {
              snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
@@ -445,7 +452,9 @@ static void resolve_to_full_path(const char *ipwd, char *buf, size_t buflen) {
             strncpy(rbuf, full_path, MAXPATHLEN - 1);
             break;
           }
-          dir = strtok(NULL, ":");
+          if (!separator)
+            break;
+          dir = separator + 1;
         }
 #endif
         free(path_dup);
