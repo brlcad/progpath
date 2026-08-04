@@ -38,6 +38,9 @@ extern "C" {
 #define PROGPATH_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define PROGPATH_VERSION_PATCH @PROJECT_VERSION_PATCH@
 
+/* Define at configuration time to require UTF-8 results. */
+#cmakedefine PROGPATH_UTF8 1
+
 #cmakedefine HAVE_CTYPE_H @HAVE_CTYPE_H@
 #cmakedefine HAVE_DIRECT_H @HAVE_DIRECT_H@
 #cmakedefine HAVE_DLFCN_H @HAVE_DLFCN_H@
@@ -69,7 +72,9 @@ extern "C" {
 #cmakedefine HAVE_GETCWD @HAVE_GETCWD@
 #cmakedefine HAVE_GETEXECNAME @HAVE_GETEXECNAME@
 #cmakedefine HAVE_GETCURRENTDIRECTORY @HAVE_GETCURRENTDIRECTORY@
+#cmakedefine HAVE_GETCURRENTDIRECTORYW @HAVE_GETCURRENTDIRECTORYW@
 #cmakedefine HAVE_GETMODULEFILENAMEA @HAVE_GETMODULEFILENAMEA@
+#cmakedefine HAVE_GETMODULEFILENAMEW @HAVE_GETMODULEFILENAMEW@
 #cmakedefine HAVE_GETPROCS @HAVE_GETPROCS@
 #cmakedefine HAVE_GETPROCS64 @HAVE_GETPROCS64@
 #cmakedefine HAVE_GETPROGNAME @HAVE_GETPROGNAME@
@@ -80,6 +85,7 @@ extern "C" {
 #cmakedefine HAVE_SEARCHPATHA @HAVE_SEARCHPATHA@
 #cmakedefine HAVE_SYSCTL @HAVE_SYSCTL@
 #cmakedefine HAVE_SYSCTLBYNAME @HAVE_SYSCTLBYNAME@
+#cmakedefine HAVE_WIDECHARTOMULTIBYTE @HAVE_WIDECHARTOMULTIBYTE@
 #cmakedefine HAVE__GETCWD @HAVE__GETCWD@
 #cmakedefine HAVE__GET_PGMPTR @HAVE__GET_PGMPTR@
 #cmakedefine HAVE__NSGETEXECUTABLEPATH @HAVE__NSGETEXECUTABLEPATH@
@@ -108,6 +114,22 @@ extern "C" {
 
 #cmakedefine HAVE_STRUCT_PSINFO @HAVE_STRUCT_PSINFO@
 #cmakedefine HAVE_STRUCT_PRPSINFO @HAVE_STRUCT_PRPSINFO@
+
+#ifdef PROGPATH_UTF8
+#  include <limits.h>
+#  if CHAR_BIT != 8 || UCHAR_MAX != 255
+#    error "PROGPATH_UTF8 requires 8-bit bytes"
+#  endif
+#  if '/' != 0x2f || 'A' != 0x41 || 'a' != 0x61 || '0' != 0x30
+#    error "PROGPATH_UTF8 requires an ASCII-compatible execution character set"
+#  endif
+#  if defined(_WIN32) || defined(__CYGWIN__)
+#    if !defined(HAVE_WINDOWS_H) || !defined(HAVE_GETCURRENTDIRECTORYW) || \
+        !defined(HAVE_GETMODULEFILENAMEW) || !defined(HAVE_WIDECHARTOMULTIBYTE)
+#      error "PROGPATH_UTF8 requires reliable Windows UTF-16 path and UTF-8 conversion APIs"
+#    endif
+#  endif
+#endif
 
 /*
  * When building or consuming the static library on Windows, define
@@ -156,6 +178,13 @@ extern "C" {
  * Thread safety: concurrent calls before the first capture completes
  * are not guaranteed safe.  Initialize from the main thread before
  * spawning other threads.
+ *
+ * When PROGPATH_UTF8 is configured, successful results are guaranteed
+ * to be valid UTF-8. Windows UTF-16 paths are converted strictly;
+ * byte-oriented platforms reject invalid UTF-8 with errno set to EILSEQ.
+ * A caller buffer too small for the complete result is rejected instead
+ * of receiving a partial UTF-8 sequence. The len argument remains a byte
+ * count and the public API is unchanged.
  */
 
 /**
@@ -217,11 +246,18 @@ PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(PROGPATH_UTF8) && !defined(EILSEQ)
+#  error "PROGPATH_UTF8 requires EILSEQ to report non-UTF-8 native paths"
+#endif
+
 #ifdef HAVE_SYS_AUXV_H
 #  include <sys/auxv.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
@@ -270,6 +306,11 @@ PROGPATH_EXPORT extern char *progipwd(char *buf, size_t len);
 #endif
 #ifdef HAVE_WINDOWS_H
 #  include <windows.h>
+#  ifdef PROGPATH_UTF8
+#    if !defined(CP_UTF8) || !defined(WC_ERR_INVALID_CHARS)
+#      error "PROGPATH_UTF8 requires strict Windows UTF-16 to UTF-8 conversion support"
+#    endif
+#  endif
 #  define chdir _chdir
 #  define getcwd _getcwd
 #  define getpid _getpid
@@ -376,6 +417,7 @@ static int is_path_absolute(const char *path) {
   return 0;
 }
 
+#if !defined(PROGPATH_UTF8) || !defined(HAVE_WINDOWS_H)
 static int path_has_separator(const char *path) {
   if (!path)
     return 0;
@@ -388,6 +430,156 @@ static int path_has_separator(const char *path) {
 
   return 0;
 }
+#endif
+
+#ifdef PROGPATH_UTF8
+/* Validate RFC 3629 UTF-8, rejecting overlong forms, surrogates, and
+ * code points above U+10FFFF. */
+static int is_valid_utf8(const char *str) {
+  const unsigned char *s = (const unsigned char *)str;
+
+  if (!s)
+    return 0;
+
+  while (*s) {
+    if (*s <= 0x7f) {
+      s++;
+    } else if (*s >= 0xc2 && *s <= 0xdf) {
+      if (s[1] < 0x80 || s[1] > 0xbf)
+        return 0;
+      s += 2;
+    } else if (*s == 0xe0) {
+      if (s[1] < 0xa0 || s[1] > 0xbf || s[2] < 0x80 || s[2] > 0xbf)
+        return 0;
+      s += 3;
+    } else if ((*s >= 0xe1 && *s <= 0xec) || (*s >= 0xee && *s <= 0xef)) {
+      if (s[1] < 0x80 || s[1] > 0xbf || s[2] < 0x80 || s[2] > 0xbf)
+        return 0;
+      s += 3;
+    } else if (*s == 0xed) {
+      if (s[1] < 0x80 || s[1] > 0x9f || s[2] < 0x80 || s[2] > 0xbf)
+        return 0;
+      s += 3;
+    } else if (*s == 0xf0) {
+      if (s[1] < 0x90 || s[1] > 0xbf || s[2] < 0x80 || s[2] > 0xbf ||
+          s[3] < 0x80 || s[3] > 0xbf)
+        return 0;
+      s += 4;
+    } else if (*s >= 0xf1 && *s <= 0xf3) {
+      if (s[1] < 0x80 || s[1] > 0xbf || s[2] < 0x80 || s[2] > 0xbf ||
+          s[3] < 0x80 || s[3] > 0xbf)
+        return 0;
+      s += 4;
+    } else if (*s == 0xf4) {
+      if (s[1] < 0x80 || s[1] > 0x8f || s[2] < 0x80 || s[2] > 0xbf ||
+          s[3] < 0x80 || s[3] > 0xbf)
+        return 0;
+      s += 4;
+    } else {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+#endif
+
+#if defined(PROGPATH_UTF8) && defined(HAVE_WINDOWS_H)
+static char *wide_to_utf8(const WCHAR *wide) {
+  char *utf8;
+  int bytes;
+
+  if (!wide)
+    return NULL;
+
+  bytes = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide, -1,
+                              NULL, 0, NULL, NULL);
+  if (bytes <= 0) {
+    errno = EILSEQ;
+    return NULL;
+  }
+
+  utf8 = (char *)calloc((size_t)bytes, sizeof(char));
+  if (!utf8)
+    return NULL;
+
+  if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wide, -1,
+                          utf8, bytes, NULL, NULL) != bytes) {
+    free(utf8);
+    errno = EILSEQ;
+    return NULL;
+  }
+
+  return utf8;
+}
+
+static char *win32_module_path_utf8(void) {
+  DWORD capacity = MAXPATHLEN;
+
+  for (;;) {
+    WCHAR *wide = (WCHAR *)calloc((size_t)capacity, sizeof(WCHAR));
+    DWORD length;
+    char *utf8;
+
+    if (!wide)
+      return NULL;
+
+    length = GetModuleFileNameW(NULL, wide, capacity);
+    if (length > 0 && length < capacity) {
+      wide[length] = L'\0';
+      utf8 = wide_to_utf8(wide);
+      free(wide);
+      return utf8;
+    }
+
+    free(wide);
+    if (length == 0 || capacity > 32768)
+      return NULL;
+    capacity *= 2;
+  }
+}
+
+static char *win32_current_directory_utf8(void) {
+  DWORD capacity = GetCurrentDirectoryW(0, NULL);
+
+  if (capacity == 0)
+    return NULL;
+
+  for (;;) {
+    WCHAR *wide = (WCHAR *)calloc((size_t)capacity, sizeof(WCHAR));
+    DWORD length;
+    char *utf8;
+
+    if (!wide)
+      return NULL;
+
+    length = GetCurrentDirectoryW(capacity, wide);
+    if (length > 0 && length < capacity) {
+      utf8 = wide_to_utf8(wide);
+      free(wide);
+      return utf8;
+    }
+
+    free(wide);
+    if (length == 0 || length > 32768)
+      return NULL;
+    capacity = length + 1;
+  }
+}
+#endif
+
+#if !defined(PROGPATH_UTF8) || !defined(HAVE_WINDOWS_H)
+#  ifdef HAVE_UNISTD_H
+static int is_executable_file(const char *path) {
+#    ifdef HAVE_SYS_STAT_H
+  struct stat st;
+  if (stat(path, &st) != 0 || !S_ISREG(st.st_mode))
+    return 0;
+#    endif
+
+  return access(path, X_OK) == 0;
+}
+#  endif
 
 static void resolve_to_full_path(const char *ipwd, char *buf, size_t buflen) {
   char rbuf[MAXPATHLEN] = {0};
@@ -448,7 +640,7 @@ static void resolve_to_full_path(const char *ipwd, char *buf, size_t buflen) {
           } else {
              snprintf(full_path, MAXPATHLEN, "%s/%s", dir, rbuf);
           }
-          if (access(full_path, X_OK) == 0) {
+          if (is_executable_file(full_path)) {
             strncpy(rbuf, full_path, MAXPATHLEN - 1);
             break;
           }
@@ -488,25 +680,42 @@ static void finalize(struct method m, const char *ipwd, char *buf, size_t buflen
   resolve_to_full_path(ipwd, buf, buflen);
   print_method(m, buf);
 }
+#endif
 
 static int we_done_yet(struct method m, char **buf, size_t buflen, const char *path) {
   size_t pathlen;
   if (!path)
     return 0;
 
+#ifdef PROGPATH_UTF8
+  if (!is_valid_utf8(path)) {
+    errno = EILSEQ;
+    return 0;
+  }
+#endif
+
   pathlen = strlen(path);
   if (pathlen < 2)
     return 0;
 
-  if ((path[0] == '/') ||
-      (pathlen > 2 && ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && path[1] == ':' && path[2] == '\\')) {
+  if (is_path_absolute(path)) {
 
     if (buf && !(*buf)) {
+#ifdef PROGPATH_UTF8
+      buflen = pathlen + 1;
+#else
       buflen = MAXPATHLEN;
+#endif
       *buf = (char *)calloc(buflen, sizeof(char));
       assert(buf && *buf && (*buf)[0] == '\0');
     }
     if (buf && *buf && buflen > 0) {
+#ifdef PROGPATH_UTF8
+      if (pathlen >= buflen) {
+        (*buf)[0] = '\0';
+        return 0;
+      }
+#endif
       strncpy(*buf, path, buflen - 1);
       (*buf)[buflen - 1] = '\0';
     }
@@ -524,6 +733,23 @@ static char *progcwd(char *buf, size_t buflen) {
   int method = 0;
 
   pp_print("progcwd() getting the current directory\n");
+
+#if defined(PROGPATH_UTF8) && defined(HAVE_WINDOWS_H)
+  {
+    char *cwd = win32_current_directory_utf8();
+    struct method m = METHOD("GetCurrentDirectoryW+UTF-8");
+    m.debug &= ~PP_CONTINUE;
+    if (cwd) {
+      print_method(m, cwd);
+      if (we_done_yet(m, &buf, buflen, cwd)) {
+        free(cwd);
+        return buf;
+      }
+      free(cwd);
+    }
+    return NULL;
+  }
+#else
 
 #ifdef HAVE_GETCWD
   {
@@ -582,6 +808,7 @@ static char *progcwd(char *buf, size_t buflen) {
   if (buf && buf[0] != '\0')
     return buf;
   return NULL;
+#endif
 }
 
 
@@ -589,16 +816,33 @@ static char *progcwd(char *buf, size_t buflen) {
 extern "C" {
 #endif
 char *progipwd(char *buf, size_t buflen) {
+#if !defined(PROGPATH_UTF8) || !defined(HAVE_WINDOWS_H)
   int debug = pp_get_debug();
   int method = 0;
+#endif
   struct method im = {0, __LINE__, "ipwd", 0};
 
   pp_print("=== progipwd() ===\n");
 
+#ifdef PROGPATH_UTF8
+  if (buf && buflen > 0)
+    buf[0] = '\0';
+#endif
+
   if (progpath_ipwd[0]) {
+#ifdef PROGPATH_UTF8
+    if (we_done_yet(im, &buf, buflen, progpath_ipwd))
+      return buf;
+    return NULL;
+#else
     we_done_yet(im, &buf, buflen, progpath_ipwd);
     return buf;
+#endif
   }
+
+#if defined(PROGPATH_UTF8) && defined(HAVE_WINDOWS_H)
+  return progcwd(buf, buflen);
+#else
 
   {
     char cwd[MAXPATHLEN] = {0};
@@ -630,6 +874,7 @@ char *progipwd(char *buf, size_t buflen) {
   if (buf && buf[0] != '\0')
     return buf;
   return NULL;
+#endif
 }
 
 char *progpath(char *buf, size_t buflen) {
@@ -641,10 +886,32 @@ char *progpath(char *buf, size_t buflen) {
 
   pp_print("=== progpath() ===\n");
 
+#ifdef PROGPATH_UTF8
+  if (buf && buflen > 0)
+    buf[0] = '\0';
+#endif
+
   progcwd(cwd, MAXPATHLEN);
   progipwd(ipwd, MAXPATHLEN);
 
   pp_print("cwd=%s ipwd=%s\n", cwd, ipwd);
+
+#if defined(PROGPATH_UTF8) && defined(HAVE_WINDOWS_H)
+  {
+    char *path = win32_module_path_utf8();
+    struct method m = METHOD("GetModuleFileNameW+UTF-8");
+    m.debug &= ~PP_CONTINUE;
+    if (path) {
+      print_method(m, path);
+      if (we_done_yet(m, &buf, buflen, path)) {
+        free(path);
+        return buf;
+      }
+      free(path);
+    }
+    return NULL;
+  }
+#else
 
   /*
    * Tier 1: authoritative operating-system interfaces that identify the
@@ -1221,6 +1488,7 @@ char *progpath(char *buf, size_t buflen) {
   if (buf && buf[0] != '\0')
     return buf;
   return NULL;
+#endif
 }
 #ifdef __cplusplus
 }
