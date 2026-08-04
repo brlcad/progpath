@@ -1,9 +1,16 @@
 name: Full Multi-Platform Matrix
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '30 3 * * 0'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Native mode is the primary per-change matrix. The same full matrix
+  # exercises UTF-8 automatically once a week.
+  PROGPATH_UTF8_MODE: ${{ github.event_name == 'schedule' && 'ON' || 'OFF' }}
   # debug mode 3 = print method activity and keep evaluating methods
   PROGPATH_DEBUG: 3
 
@@ -20,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
       - name: Build
         run: cmake --build build --config Debug
       - name: Test
@@ -38,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
       - name: Build
         run: cmake --build build --config Debug
       - name: Test
@@ -78,7 +85,7 @@ jobs:
       - name: Install dependencies
         run: ${{ matrix.install }}
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
       - name: Build
         run: cmake --build build
       - name: Test
@@ -104,7 +111,7 @@ jobs:
           prepare: |
             pkg install -y cmake gmake
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -127,7 +134,7 @@ jobs:
             mkdir -p /proc
             mount -t procfs proc /proc
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -146,7 +153,7 @@ jobs:
           prepare: |
             pkg_add cmake gmake
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -165,7 +172,7 @@ jobs:
           prepare: |
             /usr/sbin/pkg_add -u cmake gmake
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -185,7 +192,7 @@ jobs:
           prepare: |
             pkg install -y cmake gmake
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -205,7 +212,7 @@ jobs:
           prepare: |
             pkgutil -y -i cmake gmake
           run: |
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -228,7 +235,7 @@ jobs:
           shell: bash
           run: |
             pkgman install -y cmake
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
 
@@ -260,7 +267,7 @@ jobs:
           gmake --version
       - name: Configure
         shell: cpa.sh {0}
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
       - name: Build
         shell: cpa.sh {0}
         run: cmake --build build
@@ -299,7 +306,7 @@ jobs:
           gmake --version
       - name: Configure
         shell: cpa.sh {0}
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=gmake -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
       - name: Build
         shell: cpa.sh {0}
         run: cmake --build build
@@ -342,6 +349,6 @@ jobs:
             cd progpath-ci-${{ matrix.host }}
             git checkout $SHA
             
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose

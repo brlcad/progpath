@@ -52,6 +52,29 @@ jobs:
       working-directory: build_san
       run: ctest -C Debug --output-on-failure
 
+  utf8-smoke:
+    if: github.event_name != 'schedule'
+    name: UTF-8 Smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # One byte-oriented platform and Windows' native UTF-16 model.
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Configure CMake (UTF-8 Strict)
+      run: cmake -B build_utf8 -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_STRICT=ON -DPROGPATH_UTF8=ON
+
+    - name: Build (UTF-8 Strict)
+      run: cmake --build build_utf8 --config Debug
+
+    - name: Test UTF-8 paths
+      working-directory: build_utf8
+      run: ctest -C Debug -R "^test_utf8_" --output-on-failure
+
   formatting:
     if: github.event_name != 'schedule'
     name: Formatting
