@@ -11,6 +11,7 @@ endif (${CMAKE_VERSION} GREATER_EQUAL "3.12")
   
 
 option(PROGPATH_STRICT "Turn on all warnings, treat as errors")
+option(PROGPATH_UTF8 "Guarantee UTF-8 results or fail when a path is not representable")
 set(PROGPATH_CFLAGS "" CACHE STRING "Specify your own flags")
 
 list(APPEND PP_CFLAGS ${PROGPATH_CFLAGS})
@@ -63,6 +64,19 @@ include(CheckProgPath)
 message(STATUS "Testing for program name facilities: ${PP_CFLAGS}")
 
 check_prog_path(CFLAGS "${PP_CFLAGS}")
+
+if (PROGPATH_UTF8 AND WIN32)
+  foreach(_utf8_capability
+      HAVE_GETCURRENTDIRECTORYW
+      HAVE_GETMODULEFILENAMEW
+      HAVE_WIDECHARTOMULTIBYTE)
+    if (NOT ${_utf8_capability})
+      message(FATAL_ERROR
+        "PROGPATH_UTF8 requires ${_utf8_capability} on Windows"
+      )
+    endif ()
+  endforeach()
+endif ()
 
 configure_file(
   "${PROJECT_SOURCE_DIR}/progpath.h.in"
