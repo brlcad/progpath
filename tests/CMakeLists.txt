@@ -84,3 +84,31 @@ set_tests_properties(test_c_init PROPERTIES
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
   ENVIRONMENT "PWD=${CMAKE_CURRENT_BINARY_DIR}"
 )
+
+if (PROGPATH_UTF8)
+  set(PROGPATH_UTF8_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/utf8-测试")
+  file(MAKE_DIRECTORY "${PROGPATH_UTF8_TEST_DIR}")
+
+  add_executable(test_utf8_compiled test_utf8.c)
+  target_link_libraries(test_utf8_compiled progpath-static)
+  target_include_directories(test_utf8_compiled PRIVATE ${PROJECT_SOURCE_DIR})
+
+  add_executable(test_utf8_header test_utf8.c)
+  target_compile_definitions(test_utf8_header PRIVATE PROGPATH_UTF8_HEADER_ONLY)
+  target_include_directories(test_utf8_header PRIVATE ${PROJECT_BINARY_DIR})
+
+  foreach(_utf8_target test_utf8_compiled test_utf8_header)
+    set_target_properties(${_utf8_target} PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${PROGPATH_UTF8_TEST_DIR}"
+      RUNTIME_OUTPUT_DIRECTORY_DEBUG "${PROGPATH_UTF8_TEST_DIR}"
+      RUNTIME_OUTPUT_DIRECTORY_RELEASE "${PROGPATH_UTF8_TEST_DIR}"
+      RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${PROGPATH_UTF8_TEST_DIR}"
+      RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${PROGPATH_UTF8_TEST_DIR}"
+    )
+    add_test(NAME ${_utf8_target} COMMAND ${_utf8_target})
+    set_tests_properties(${_utf8_target} PROPERTIES
+      WORKING_DIRECTORY "${PROGPATH_UTF8_TEST_DIR}"
+      ENVIRONMENT "PWD=${PROGPATH_UTF8_TEST_DIR}"
+    )
+  endforeach()
+endif ()
