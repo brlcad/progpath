@@ -112,8 +112,11 @@ function(CHECK_PROG_PATH)
 
   # functions
   check_function_exists(GetCurrentDirectory HAVE_GETCURRENTDIRECTORY)
+  check_function_exists(GetCurrentDirectoryW HAVE_GETCURRENTDIRECTORYW)
   check_function_exists(GetModuleFileNameA HAVE_GETMODULEFILENAMEA)
+  check_function_exists(GetModuleFileNameW HAVE_GETMODULEFILENAMEW)
   check_function_exists(SearchPathA HAVE_SEARCHPATHA)
+  check_function_exists(WideCharToMultiByte HAVE_WIDECHARTOMULTIBYTE)
   check_function_exists(_NSGetExecutablePath HAVE__NSGETEXECUTABLEPATH)
   check_function_exists(_get_pgmptr HAVE__GET_PGMPTR)
   check_symbol_exists(_getcwd "direct.h" HAVE__GETCWD)
