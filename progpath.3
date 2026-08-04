@@ -37,6 +37,28 @@ memory is allocated with
 .BR calloc (3)
 and the caller must release it with
 .BR free (3).
+.SH ENCODING
+Native path bytes are returned by default.
+Configure progpath with
+.B PROGPATH_UTF8
+enabled to require valid UTF-8 results without changing the function
+signatures.
+.PP
+In UTF-8 mode, Windows paths are obtained through native UTF-16 APIs and
+converted strictly to UTF-8. On byte-oriented systems, already-valid UTF-8
+paths are returned unchanged. A path containing invalid UTF-8 bytes cannot be
+converted without changing its identity, so the function returns
+.B NULL
+and sets
+.I errno
+to
+.BR EILSEQ .
+An undersized caller buffer also returns
+.B NULL
+rather than a partial UTF-8 sequence.
+.PP
+The generated header produces a compile-time error if UTF-8 mode is requested
+without the character representation or Windows APIs needed to guarantee it.
 .SH INITIALIZATION
 .B progpath
 captures the initial working directory once, as early as possible.
