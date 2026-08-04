@@ -58,6 +58,28 @@ After `cmake --install`, callers can use:
 
 more detailed notes in [INTEGRATION.md](INTEGRATION.md).
 
+## optional UTF-8 contract
+
+Configure with `-DPROGPATH_UTF8=ON` to require both public functions to
+return valid UTF-8 while keeping the same two-function `char *` API:
+
+```shell
+cmake -S . -B build -DPROGPATH_UTF8=ON
+```
+
+On Windows, progpath uses native UTF-16 path APIs and converts their
+results strictly to UTF-8. On byte-oriented systems such as macOS,
+Linux, BSD, Solaris, AIX, and Haiku, paths that are already valid UTF-8
+are returned unchanged. A native byte path that is not valid UTF-8
+cannot be converted without changing which file it identifies, so the
+call fails instead with `errno` set to `EILSEQ`.
+
+The generated header emits a compile-time error when UTF-8 mode is
+requested on an incompatible character model or when the required
+Windows Unicode APIs are unavailable. Caller-provided buffers that are
+too small also fail rather than returning partial UTF-8. Native path
+behavior remains the default.
+
 ## initialization
 
 progpath captures the initial working directory (ipwd) once, as early
@@ -96,7 +118,13 @@ environment that doesn't work!
 
 ## platform CI status matrix
 
-following environments are continuously tested; badges reflect current status for each:
+The broad platform matrix runs the default native mode on every change
+and repeats automatically in UTF-8 mode each week. Focused Linux and
+Windows UTF-8 smoke jobs run on every change, exercising compiled-library
+and single-header builds from a directory containing non-ASCII
+characters. Release CI installs and tests native packages on Linux,
+macOS, and Windows, plus UTF-8 packages on representative POSIX and
+Windows systems. Badges reflect current status for each environment:
 
 | OS Group | Environment | Architecture | Status |
 |---|---|---|---|
