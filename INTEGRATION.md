@@ -11,6 +11,30 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+To build either integration form with a strict UTF-8 result contract:
+
+```sh
+cmake -S . -B build -DPROGPATH_UTF8=ON
+```
+
+This setting is recorded in the generated header and therefore applies
+to both the compiled libraries and single-header implementations. It
+does not change the API or ABI: `progpath()` and `progipwd()` still
+return `char *`, with `len` measured in bytes.
+
+In UTF-8 mode Windows paths are obtained as UTF-16 and converted to
+UTF-8. Byte-oriented platforms validate native path bytes and reject a
+path that is not valid UTF-8 with `errno == EILSEQ`; substituting or
+locale-converting those bytes could identify a different file. An
+undersized caller buffer returns `NULL` with an empty output buffer
+rather than splitting a UTF-8 sequence. Configuration or compilation
+fails when the target cannot provide the required guarantees.
+
+For a manually configured single-header integration, defining
+`PROGPATH_UTF8` before `PROGPATH_IMPLEMENTATION` selects the same mode.
+The header's platform feature macros must come from CMake probes for the
+actual target environment.
+
 ## single-header
 
 Use the generated `progpath.h` from the build tree or install tree.
