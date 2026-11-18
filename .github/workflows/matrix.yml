@@ -5,18 +5,40 @@ on:
   pull_request:
   schedule:
     - cron: '30 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Platform suite to run
+        type: choice
+        default: all
+        options:
+          - all
+          - haiku
+          - cfarm
+      utf8:
+        description: Enable UTF-8 paths
+        type: choice
+        default: 'OFF'
+        options:
+          - 'OFF'
+          - 'ON'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.suite || 'all' }}-${{ inputs.utf8 || 'default' }}
+  cancel-in-progress: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # Native mode is the primary per-change matrix. The same full matrix
-  # exercises UTF-8 automatically once a week.
-  PROGPATH_UTF8_MODE: ${{ github.event_name == 'schedule' && 'ON' || 'OFF' }}
+  # exercises UTF-8 automatically once a week, or on manual request.
+  PROGPATH_UTF8_MODE: ${{ github.event_name == 'schedule' && 'ON' || inputs.utf8 || 'OFF' }}
   # debug mode 3 = print method activity and keep evaluating methods
   PROGPATH_DEBUG: 3
 
 jobs:
   # 1. WINDOWS (x64)
   windows-suite:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: Windows (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -36,6 +58,7 @@ jobs:
 
   # 2. MACOS
   macos-suite:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: macOS (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -54,6 +77,7 @@ jobs:
 
   # 3. LINUX DISTROS (Docker-based)
   linux-distros:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: Linux (${{ matrix.name }})
     runs-on: ubuntu-latest
     strategy:
@@ -97,6 +121,7 @@ jobs:
   # FreeBSD without procfs: exercises sysctl(KERN_PROC_PATHNAME) and
   # other non-proc methods. procfs is intentionally NOT mounted.
   freebsd-noproc:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: FreeBSD (sysctl)
     runs-on: ubuntu-latest
     steps:
@@ -118,6 +143,7 @@ jobs:
   # FreeBSD with procfs mounted: additionally exercises
   # readlink(/proc/curproc/file) and readlink(/proc/$PID/file).
   freebsd-proc:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: FreeBSD (procfs)
     runs-on: ubuntu-latest
     steps:
@@ -139,6 +165,7 @@ jobs:
             cd build && ctest --output-on-failure --verbose
 
   openbsd:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: OpenBSD
     runs-on: ubuntu-latest
     steps:
@@ -158,6 +185,7 @@ jobs:
             cd build && ctest --output-on-failure --verbose
 
   netbsd:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: NetBSD
     runs-on: ubuntu-latest
     steps:
@@ -178,6 +206,7 @@ jobs:
 
   # DragonFlyBSD runs separately — different pkg manager
   dragonflybsd:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: DragonFlyBSD
     runs-on: ubuntu-latest
     steps:
@@ -198,6 +227,7 @@ jobs:
 
   # 5. SOLARIS (VM-based)
   solaris-suite:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: Oracle Solaris CBE
     runs-on: ubuntu-latest
     steps:
@@ -220,27 +250,37 @@ jobs:
   # Uses cross-platform-actions/action which boots a real Haiku VM on
   # an Ubuntu host via QEMU under the hood.
   haiku:
-    name: Haiku (r1beta5)
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'haiku'
+    name: Haiku (r1beta6)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Test on Haiku
-        uses: cross-platform-actions/action@v1.0.0
+      - name: Start VM
+        uses: cross-platform-actions/action@v1.5.0
         env:
           PROGPATH_DEBUG: ${{ env.PROGPATH_DEBUG }}
         with:
           environment_variables: PROGPATH_DEBUG
           operating_system: haiku
-          version: 'r1beta5'
+          # beta5's HaikuPorts repository no longer serves its packages.
+          version: 'r1beta6'
           shell: bash
-          run: |
-            pkgman install -y cmake
-            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
-            cmake --build build
-            cd build && ctest --output-on-failure --verbose
+      - name: Install CMake
+        shell: cpa.sh {0}
+        run: pkgman install -y cmake
+      - name: Configure
+        shell: cpa.sh {0}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
+      - name: Build
+        shell: cpa.sh {0}
+        run: cmake --build build
+      - name: Test
+        shell: cpa.sh {0}
+        run: ctest --test-dir build --output-on-failure --verbose
 
   # 7. MIDNIGHTBSD — FreeBSD-derived, uses mport/pkg.
   midnightbsd:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: MidnightBSD (4.0.4)
     runs-on: ubuntu-latest
     steps:
@@ -278,6 +318,7 @@ jobs:
   # 8. OMNIOS — illumos/Solaris-family.
   # Exercises getexecname and /proc/self/path/a.out methods.
   omnios:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all'
     name: OmniOS (r151056)
     runs-on: ubuntu-latest
     steps:
@@ -316,18 +357,26 @@ jobs:
 
   # 9. GCC Compile Farm (Remote SSH)
   cfarm:
+    if: >-
+      (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'cfarm') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     name: CFarm (${{ matrix.name }})
     runs-on: ubuntu-latest
+    timeout-minutes: 55
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: AIX 7.3
             host: cfarm119.cfarm.net
+            # Feature detection alone exceeds the action's default 10m.
+            command_timeout: 45m
           - name: AlmaLinux 8.10
             host: cfarm135.cfarm.net
+            command_timeout: 10m
           - name: Sun Solaris 10
             host: cfarm210.cfarm.net
+            command_timeout: 10m
     steps:
       - name: Run on ${{ matrix.name }} via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -335,20 +384,30 @@ jobs:
           PROGPATH_DEBUG: ${{ env.PROGPATH_DEBUG }}
           REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          CI_WORKDIR: progpath-ci-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.host }}
         with:
           host: ${{ matrix.host }}
           username: ${{ secrets.CFARM_USERNAME }}
           key: ${{ secrets.CFARM_SSH_KEY }}
-          envs: PROGPATH_DEBUG,REPO,SHA
+          command_timeout: ${{ matrix.command_timeout }}
+          envs: PROGPATH_DEBUG,REPO,SHA,CI_WORKDIR
           script: |
+            set -eu
             # Add paths for common build tools across CFarm hosts
-            export PATH=/opt/freeware/bin:/usr/local/bin:/opt/csw/bin:$PATH
-            
-            rm -rf progpath-ci-${{ matrix.host }}
-            git clone https://github.com/$REPO.git progpath-ci-${{ matrix.host }}
-            cd progpath-ci-${{ matrix.host }}
-            git checkout $SHA
-            
+            PATH=/opt/freeware/bin:/usr/local/bin:/opt/csw/bin:$PATH
+            export PATH
+
+            # Isolate concurrent pushes, PRs, and manual runs on shared hosts.
+            work_dir="$HOME/$CI_WORKDIR"
+            mkdir "$work_dir"
+            trap 'rm -rf "$work_dir"' 0
+            cd "$work_dir"
+            git init
+            git remote add origin "https://github.com/$REPO.git"
+            # Fetch the exact tested commit, including synthetic PR merges.
+            git fetch --depth 1 origin "$SHA"
+            git checkout --detach FETCH_HEAD
+
             cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
             cmake --build build
             cd build && ctest --output-on-failure --verbose
