@@ -145,9 +145,12 @@ Windows systems. badges reflect current status for each environment:
 | | MidnightBSD 4.0.4 | x86_64 | [![MidnightBSD](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=MidnightBSD%20%284.0.4%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
 | **Solaris** | Oracle Solaris 11.4 | x86_64 | [![Solaris](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=Solaris&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
 | | OmniOS r151056 | x86_64 | [![OmniOS](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=OmniOS%20%28r151056%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
-| | Sun Solaris 10 | sun4u | [![Solaris 10](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=CFarm%20%28Sun%20Solaris%2010%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
 | **Haiku** | Haiku r1beta5 | x86_64 | [![Haiku](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=Haiku%20%28r1beta5%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
 | **AIX** | AIX 7.3 | chrp | [![AIX 7.3](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=CFarm%20%28AIX%207.3%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+
+<!-- temporarily disabled while the Solaris 10 host is unavailable.
+| | Sun Solaris 10 | sun4u | [![Solaris 10](https://img.shields.io/github/check-runs/brlcad/progpath/main?nameFilter=CFarm%20%28Sun%20Solaris%2010%29&label=test)](https://github.com/brlcad/progpath/actions/workflows/matrix.yml) |
+-->
 
 ---
 &copy; 2021-2026 Christopher Sean Morrison [@brlcad]
