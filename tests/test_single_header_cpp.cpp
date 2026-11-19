@@ -1,10 +1,10 @@
 #define PROGPATH_IMPLEMENTATION
 #include "progpath.h"
+#include "test_path_compare.h"
 
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #ifdef _WIN32
 #  include <direct.h>
@@ -48,7 +48,7 @@ int main() {
     std::fprintf(stderr, "FAIL: progipwd() returned NULL\n");
     return 1;
   }
-  if (std::strcmp(ipwd, start_cwd) != 0) {
+  if (!test_paths_equal(ipwd, start_cwd)) {
     std::fprintf(stderr, "FAIL: progipwd() [%s] != start cwd [%s]\n", ipwd, start_cwd);
     return 1;
   }

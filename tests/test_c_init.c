@@ -1,9 +1,9 @@
 #define PROGPATH_NO_C_INIT_WARNING 1
 #include "progpath.h"
+#include "test_path_compare.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #ifdef _WIN32
 #  include <direct.h>
@@ -37,7 +37,7 @@ int main(void) {
     return 1;
   }
 
-  if (strcmp(initial_expected, ipwd) != 0) {
+  if (!test_paths_equal(initial_expected, ipwd)) {
     fprintf(stderr, "FAIL: Expected ipwd '%s', but got '%s'\n", initial_expected, ipwd);
     free(ipwd);
     return 1;

@@ -1,8 +1,8 @@
 #include "progpath.h"
+#include "test_path_compare.h"
 
 #include <errno.h>
 #include <stdio.h>
-#include <string.h>
 
 #ifdef _WIN32
 #  include <direct.h>
@@ -46,7 +46,7 @@ int main(void) {
     fprintf(stderr, "FAIL: progipwd() returned NULL\n");
     return 1;
   }
-  if (strcmp(ipwd, start_cwd) != 0) {
+  if (!test_paths_equal(ipwd, start_cwd)) {
     fprintf(stderr, "FAIL: progipwd() [%s] != start cwd [%s]\n", ipwd, start_cwd);
     return 1;
   }

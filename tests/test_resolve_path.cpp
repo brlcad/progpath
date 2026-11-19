@@ -75,9 +75,33 @@ int main() {
   char shadow_directory_tool[MAXPATHLEN] = {0};
   char resolved[MAXPATHLEN] = {0};
   char expected[MAXPATHLEN] = {0};
+  char overlong_dir[MAXPATHLEN + 1] = {0};
+  char overlong_path[sizeof(overlong_dir) + sizeof(real_dir)] = {0};
+  char joined[sizeof("base/tool")] = "base";
   char *saved_path = NULL;
   const char *current_path = std::getenv("PATH");
   int ret = 1;
+
+  if (!join_path_components(joined, sizeof(joined), joined, "tool") ||
+      std::strcmp(joined, "base/tool") != 0) {
+    std::fprintf(stderr, "FAIL: exact-fit path join failed\n");
+    return 1;
+  }
+
+  if (join_path_components(joined, sizeof(joined) - 1, "base", "tool") ||
+      std::strcmp(joined, "base/tool") != 0) {
+    std::fprintf(stderr, "FAIL: overflowing path join changed its destination\n");
+    return 1;
+  }
+
+  std::memset(overlong_dir, 'a', sizeof(overlong_dir) - 1);
+  overlong_dir[0] = '/';
+  std::strcpy(resolved, "subdir/tool");
+  resolve_to_full_path(overlong_dir, resolved, sizeof(resolved));
+  if (std::strcmp(resolved, "subdir/tool") != 0) {
+    std::fprintf(stderr, "FAIL: overlong initial directory produced a truncated path\n");
+    return 1;
+  }
 
   if (!getcwd(saved_cwd, sizeof(saved_cwd))) {
     std::fprintf(stderr, "FAIL: getcwd() failed\n");
@@ -141,6 +165,23 @@ int main() {
   }
 
   std::printf("PASS: explicit relative paths resolve before PATH search [%s]\n", resolved);
+
+  std::snprintf(overlong_path, sizeof(overlong_path), "%s:%s", overlong_dir, real_dir);
+  if (setenv_compat("PATH", overlong_path) != 0) {
+    std::fprintf(stderr, "FAIL: set PATH with overlong component failed\n");
+    goto cleanup;
+  }
+
+  std::memset(resolved, 0, sizeof(resolved));
+  std::strncpy(resolved, "bare-tool", sizeof(resolved) - 1);
+  resolve_to_full_path(real_dir, resolved, sizeof(resolved));
+
+  if (!realpath(real_bare_tool, expected) || std::strcmp(resolved, expected) != 0) {
+    std::fprintf(stderr, "FAIL: PATH search did not skip an overlong component\n");
+    goto cleanup;
+  }
+
+  std::printf("PASS: PATH search skips overlong components [%s]\n", resolved);
 
   if (setenv_compat("PATH", ":shadow") != 0) {
     std::fprintf(stderr, "FAIL: set PATH with empty component failed\n");
