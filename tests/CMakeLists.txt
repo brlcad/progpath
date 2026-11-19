@@ -49,6 +49,7 @@ add_executable(test_single_header_split
   test_single_header_split_c.c
   test_single_header_impl.cpp
 )
+target_compile_definitions(test_single_header_split PRIVATE PROGPATH_STATIC)
 target_include_directories(test_single_header_split PRIVATE ${PROJECT_BINARY_DIR})
 add_test(NAME test_single_header_split COMMAND test_single_header_split)
 set_tests_properties(test_single_header_split PROPERTIES
@@ -68,10 +69,10 @@ set_tests_properties(test_single_header_c PROPERTIES
 # demo program and checks the output.  Also sets PROGPATH_DEBUG=3 so
 # failures produce useful output even without --output-on-failure.
 add_test(NAME progpath_bin_output
-  COMMAND ${CMAKE_COMMAND} -E env PROGPATH_DEBUG=3
-    $<TARGET_FILE:progpath-bin>
+  COMMAND progpath-bin
 )
 set_tests_properties(progpath_bin_output PROPERTIES
+  ENVIRONMENT "PROGPATH_DEBUG=3"
   PASS_REGULAR_EXPRESSION "Program executable is \\[ ([A-Za-z]:\\\\|/)"
   FAIL_REGULAR_EXPRESSION  "ERROR:"
 )
