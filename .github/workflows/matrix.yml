@@ -14,6 +14,9 @@ on:
         options:
           - all
           - haiku
+          - hurd
+          - redox
+          - reactos
           - cfarm
       utf8:
         description: Enable UTF-8 paths
@@ -355,7 +358,82 @@ jobs:
         shell: cpa.sh {0}
         run: ctest --test-dir build --output-on-failure --verbose
 
-  # 9. GCC Compile Farm (Remote SSH)
+  # 9. GNU/HURD — GNU userspace on a Mach kernel.
+  hurd:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'hurd'
+    name: GNU/Hurd (2025)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test in GNU/Hurd
+        uses: vmactions/hurd-vm@v1.0.2
+        with:
+          release: '2025'
+          arch: x86_64
+          # Match the image's uniprocessor kernel and memory configuration.
+          cpu: 1
+          mem: 4096
+          envs: PROGPATH_DEBUG
+          copyback: false
+          prepare: |
+            set -eu
+            apt-get update
+            apt-get install -y cmake build-essential
+          run: |
+            set -eu
+            cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
+            cmake --build build
+            cd build && ctest --output-on-failure --verbose
+
+  # 10. REACTOS — MinGW i386 binaries in a Win32 guest.
+  reactos:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'reactos'
+    name: ReactOS (0.4.15)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install MinGW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64-i686-win32 g++-mingw-w64-i686-win32
+          i686-w64-mingw32-gcc --version
+          i686-w64-mingw32-g++ --version
+          cmake --version
+      - name: Build for ReactOS
+        run: |
+          # The VM syncs $HOME/work to C:\work, independently of the checkout name.
+          cmake -B "$HOME/work/reactos-build" \
+            -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=i686 \
+            -DCMAKE_C_COMPILER=i686-w64-mingw32-gcc \
+            -DCMAKE_CXX_COMPILER=i686-w64-mingw32-g++ \
+            -DCMAKE_EXE_LINKER_FLAGS=-static -DCMAKE_SHARED_LINKER_FLAGS=-static \
+            -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
+          cmake --build "$HOME/work/reactos-build"
+          ctest --test-dir "$HOME/work/reactos-build" --output-on-failure -R '^validate_config_symbols$'
+          if [ "${{ env.PROGPATH_UTF8_MODE }}" = ON ]; then
+            # The pinned guest tar uses ANSI paths; restore Unicode inside ReactOS.
+            i686-w64-mingw32-gcc -Wall -Wextra -Werror -static \
+              .github/scripts/reactos-utf8.c -o "$HOME/work/reactos-build/restore-reactos-utf8.exe"
+            mv "$HOME/work/reactos-build/tests/utf8-测试" "$HOME/work/reactos-build/tests/utf8-staging"
+          fi
+          find "$HOME/work/reactos-build/tests" -type f -name 'test_*.exe' \
+            | wc -l | tr -d '[:space:]' >"$HOME/work/reactos-build/expected-test-count.txt"
+          cp .github/scripts/test-reactos.cmd "$HOME/work/reactos-build/"
+      - name: Test in ReactOS
+        uses: vmactions/reactos-vm@v1.0.5
+        with:
+          release: '0.4.15'
+          arch: i386
+          mem: 2048
+          sync: tar
+          copyback: false
+          run: |
+            ver
+            set "PROGPATH_DEBUG=${{ env.PROGPATH_DEBUG }}"
+            call C:\work\reactos-build\test-reactos.cmd C:\work\reactos-build
+
+  # 11. GCC Compile Farm (Remote SSH)
   cfarm:
     if: >-
       (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'cfarm') &&
@@ -374,6 +452,14 @@ jobs:
           - name: AlmaLinux 8.10
             host: cfarm135.cfarm.net
             command_timeout: 10m
+          - name: CheriBSD purecap
+            host: cfarm240.cfarm.net
+            command_timeout: 30m
+            # Select CheriABI explicitly so this cannot silently test the hybrid ABI.
+            cmake_args: >-
+              -DCMAKE_C_COMPILER=cc -DCMAKE_CXX_COMPILER=c++
+              -DCMAKE_C_FLAGS=-mabi=purecap -DCMAKE_CXX_FLAGS=-mabi=purecap
+              -DCMAKE_MAKE_PROGRAM=gmake
           # Temporarily disabled after host hardware failure; no available CFarm Solaris 10 replacement.
           # - name: Sun Solaris 10
           #   host: cfarm210.cfarm.net
@@ -395,7 +481,7 @@ jobs:
           script: |
             set -eu
             # Add paths for common build tools across CFarm hosts
-            PATH=/opt/freeware/bin:/usr/local/bin:/opt/csw/bin:$PATH
+            PATH=/opt/freeware/bin:/usr/local/bin:/usr/local64/bin:/opt/csw/bin:$PATH
             export PATH
 
             # Require a single, nonempty CI directory name before creating it.
@@ -440,7 +526,36 @@ jobs:
               git fetch --depth 1 origin "$SHA"
               git checkout --detach FETCH_HEAD
 
-              cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }}
+              cmake -B build -DCMAKE_BUILD_TYPE=Debug -DPROGPATH_UTF8=${{ env.PROGPATH_UTF8_MODE }} ${{ matrix.cmake_args }}
               cmake --build build
               cd build && ctest --output-on-failure --verbose
             )
+
+  # 12. REDOX — matching cross compiler and guest.
+  redox-suite:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'redox'
+    name: Redox (x86_64)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and test in Redox
+        # Pin the matching compiler and guest supplied by https://github.com/redox-os/redoxer.
+        env:
+          REDOXER_IMAGE: redoxos/redoxer@sha256:66496e0c5b16425b79c4b2b0c28ffd0b8f7c22567d46eed2e10ef69a011749ae
+        run: |
+          docker run --rm --device=/dev/kvm \
+            --volume "$PWD:/work" --workdir /work \
+            --env PROGPATH_DEBUG --env PROGPATH_UTF8_MODE \
+            --env REDOXER_USE_FUSE=false "$REDOXER_IMAGE" sh -ec '
+              apt-get update -q
+              apt-get install -y --no-install-recommends cmake
+              redoxer env cmake -B build -DCMAKE_BUILD_TYPE=Debug \
+                -DPROGPATH_UTF8="$PROGPATH_UTF8_MODE" \
+                -DCMAKE_SYSTEM_NAME=Redox -DCMAKE_SYSTEM_PROCESSOR=x86_64 \
+                "-DCMAKE_CROSSCOMPILING_EMULATOR=sh;/work/.github/scripts/redox-exec.sh;/work/build"
+              redoxer env cmake --build build
+              redoxer exec --output - uname -a
+              cd build
+              ctest --output-on-failure --verbose
+            '
