@@ -374,9 +374,10 @@ jobs:
           - name: AlmaLinux 8.10
             host: cfarm135.cfarm.net
             command_timeout: 10m
-          - name: Sun Solaris 10
-            host: cfarm210.cfarm.net
-            command_timeout: 10m
+          # Temporarily disabled after host hardware failure; no available CFarm Solaris 10 replacement.
+          # - name: Sun Solaris 10
+          #   host: cfarm210.cfarm.net
+          #   command_timeout: 10m
     steps:
       - name: Run on ${{ matrix.name }} via SSH
         uses: appleboy/ssh-action@v1.0.3
