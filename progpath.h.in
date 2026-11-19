@@ -95,6 +95,7 @@ extern "C" {
 #cmakedefine HAVE__GET_PGMPTR @HAVE__GET_PGMPTR@
 #cmakedefine HAVE__NSGETEXECUTABLEPATH @HAVE__NSGETEXECUTABLEPATH@
 
+#cmakedefine HAVE_DECL_AT_EXECFN @HAVE_DECL_AT_EXECFN@
 #cmakedefine HAVE_DECL_CTL_KERN @HAVE_DECL_CTL_KERN@
 #cmakedefine HAVE_DECL_KERN_PROC @HAVE_DECL_KERN_PROC@
 #cmakedefine HAVE_DECL_KERN_PROCARGS2 @HAVE_DECL_KERN_PROCARGS2@
@@ -1224,7 +1225,7 @@ char *progpath(char *buf, size_t buflen) {
   }
 #endif
 
-#ifdef HAVE_GETAUXVAL
+#if defined(HAVE_GETAUXVAL) && defined(HAVE_DECL_AT_EXECFN)
   {
     char mbuf[MAXPATHLEN] = {0};
     char *argv0 = (char *)getauxval(AT_EXECFN);
